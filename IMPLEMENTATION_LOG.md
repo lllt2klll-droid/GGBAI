@@ -505,12 +505,14 @@ Tất cả milestone code-only hoàn thành. Còn lại cần user:
 ### Kiểm thử
 - lint/typecheck/build: pass.
 
-## Polish 7 — Inspector clear-all
+## Polish 7 — Inspector clear-all + undoable delete
 
 ### Đã làm
-- `InspectorPanel` — nút "Xóa hết" xóa tất cả đối tượng (confirm
-  trước). Lưu ý: xóa qua Inspector không đi qua CommandHistory —
-  không undo được (giới hạn hiện tại).
+- `InspectorPanel` — nút "Xóa hết" xóa tất cả đối tượng (confirm).
+- `WorkspaceClient.deleteObjects` — xóa qua Inspector giờ export
+  snapshot trước/sau và push vào CommandHistory → **undo được**
+  (Ctrl+Z). InspectorPanel nhận prop `onDeleteObjects`, fallback
+  adapter.deleteObject nếu không có.
 
 ### Kiểm thử
 - lint/typecheck/build: pass.
