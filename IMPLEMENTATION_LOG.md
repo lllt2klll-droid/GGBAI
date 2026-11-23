@@ -483,3 +483,13 @@ Tất cả milestone code-only hoàn thành. Còn lại cần user:
 
 ### Kiểm thử
 - vitest: 60/60 pass. lint/typecheck/build: pass.
+
+## Polish 4 — Keyboard shortcuts + git commit
+
+### Đã làm
+- `WorkspaceClient` — Ctrl+Z undo, Ctrl+Shift+Z / Ctrl+Y redo
+  (bỏ qua khi focus input/textarea); tooltip nút cập nhật.
+- Commit toàn bộ MVP lên git (`2dc0ab4`).
+
+### Kiểm thử
+- lint/typecheck/build: pass.
