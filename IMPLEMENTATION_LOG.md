@@ -493,3 +493,13 @@ Tất cả milestone code-only hoàn thành. Còn lại cần user:
 
 ### Kiểm thử
 - lint/typecheck/build: pass.
+
+## Polish 5 — Project rename/duplicate
+
+### Đã làm
+- `ProjectsClient` — nút ✎ đổi tên (prompt) và ⧉ nhân bản (id mới,
+  title + " (bản sao)") qua unified store — hoạt động cả local lẫn
+  Supabase (upsert).
+
+### Kiểm thử
+- lint/typecheck/build: pass.
