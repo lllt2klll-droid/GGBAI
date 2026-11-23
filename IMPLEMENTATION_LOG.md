@@ -494,6 +494,17 @@ Tất cả milestone code-only hoàn thành. Còn lại cần user:
 ### Kiểm thử
 - lint/typecheck/build: pass.
 
+## Polish 6 — Dark mode toggle
+
+### Đã làm
+- `ThemeToggle` — toggle `.dark` class lên `<html>`, persist
+  localStorage (`ggb-ai-theme`), fallback `prefers-color-scheme`.
+  Dark tokens đã có sẵn trong globals.css.
+- `Topbar` — thêm ThemeToggle bên phải.
+
+### Kiểm thử
+- lint/typecheck/build: pass.
+
 ## Polish 5 — Project rename/duplicate
 
 ### Đã làm
