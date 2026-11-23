@@ -18,6 +18,7 @@ export interface GGBApi {
   setColor?(name: string, r: number, g: number, b: number): void;
   setVisible?(name: string, visible: boolean): void;
   setLabelVisible?(name: string, visible: boolean): void;
+  renameObject?(oldName: string, newName: string): boolean;
   deleteObject?(name: string): void;
   getBase64?(): string;
   setBase64?(data: string): boolean;

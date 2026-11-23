@@ -2,6 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  Key,
+  HardDrive,
+  Download,
+  Upload,
+  Eye,
+  EyeOff,
+  Check,
+} from "lucide-react";
+import {
   GEMINI_MODELS,
   loadSettings,
   saveSettings,
@@ -15,41 +24,44 @@ import {
   type LocalProject,
 } from "@/lib/persistence";
 import { isSupabaseEnabled } from "@/lib/persistence/supabaseStore";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Modal } from "@/components/ui/Modal";
 
 function Section({
+  icon: Icon,
   title,
   desc,
   children,
 }: {
+  icon: React.ElementType;
   title: string;
   desc?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="glass animate-fade-up rounded-2xl p-5">
-      <h2 className="text-sm font-semibold">{title}</h2>
-      {desc && <p className="mt-1 text-xs text-foreground/60">{desc}</p>}
+    <section className="surface-card p-5 animate-fade-up">
+      <div className="flex items-center gap-2.5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <Icon className="h-4 w-4" />
+        </div>
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+          {desc && <p className="text-xs text-foreground/60">{desc}</p>}
+        </div>
+      </div>
       <div className="mt-4 space-y-3">{children}</div>
     </section>
   );
 }
 
-function Row({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="flex flex-col gap-1.5 text-sm">
-      <span className="text-xs font-medium text-foreground/70">{label}</span>
-      {children}
-    </label>
-  );
-}
-
-const inputCls =
-  "w-full rounded-xl border border-border bg-surface/70 px-3 py-2 text-sm outline-none transition-colors focus:border-primary";
-
 export function SettingsClient() {
   const [settings, setSettings] = useState<AppSettings | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [savedToast, setSavedToast] = useState(false);
+  const [showKey, setShowKey] = useState(false);
   const [projects, setProjects] = useState<LocalProject[]>([]);
+  const [confirmClearChat, setConfirmClearChat] = useState(false);
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
+  const [notificationMsg, setNotificationMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -61,19 +73,25 @@ export function SettingsClient() {
   }, []);
 
   if (!settings) {
-    return <div className="skeleton h-64 rounded-2xl" />;
+    return (
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="h-40 rounded-2xl border border-border bg-surface-muted/30 animate-pulse" />
+        ))}
+      </div>
+    );
   }
 
   const update = (patch: Partial<AppSettings>) => {
     const next = { ...settings, ...patch };
     setSettings(next);
     saveSettings(next);
-    setSaved(true);
+    setSavedToast(true);
     window.dispatchEvent(new Event("ggb-settings-changed"));
-    setTimeout(() => setSaved(false), 1500);
+    setTimeout(() => setSavedToast(false), 2000);
   };
 
-  const exportAll = async () => {
+  const handleExportAll = async () => {
     const all = await listProjects();
     const blob = new Blob([JSON.stringify(all, null, 2)], {
       type: "application/json",
@@ -84,9 +102,10 @@ export function SettingsClient() {
     a.download = `ggb-ai-projects-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
+    setNotificationMsg(`Đã xuất thành công ${all.length} dự án.`);
   };
 
-  const importAll = async (file: File) => {
+  const handleImportAll = async (file: File) => {
     try {
       const data = JSON.parse(await file.text()) as LocalProject[];
       if (!Array.isArray(data)) throw new Error("bad format");
@@ -98,20 +117,18 @@ export function SettingsClient() {
         }
       }
       setProjects(await listProjects());
-      window.alert(`Đã nhập ${n} dự án`);
+      setNotificationMsg(`Đã nhập thành công ${n} dự án vào máy này.`);
     } catch {
-      window.alert("File không hợp lệ");
+      setNotificationMsg("Tệp JSON không đúng cấu trúc dự án GeoGebra AI.");
     }
   };
 
-  const clearChat = () => {
+  const handleClearChatConfirm = () => {
     localStorage.removeItem("ggb-ai-chat");
-    window.alert("Đã xóa lịch sử chat");
+    setNotificationMsg("Đã xóa toàn bộ lịch sử tin nhắn.");
   };
 
-  const clearAll = async () => {
-    if (!window.confirm("Xóa TOÀN BỘ dữ liệu local (projects, chat, settings)?"))
-      return;
+  const handleClearAllConfirm = async () => {
     for (const p of projects) await deleteProject(p.id);
     localStorage.removeItem("ggb-ai-chat");
     localStorage.removeItem("ggb-ai-settings");
@@ -122,137 +139,189 @@ export function SettingsClient() {
   };
 
   return (
-    <div className="space-y-4">
-      <header className="animate-fade-up">
-        <h1 className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-2xl font-bold text-transparent">
-          Cài đặt
-        </h1>
-        <p className="mt-1 text-sm text-foreground/60">
-          Tất cả dữ liệu lưu local trên máy này — không gửi đi đâu ngoài
-          request AI bạn chủ động tạo.
-        </p>
+    <div className="space-y-6">
+      {/* Header */}
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">
+            Cài đặt ứng dụng
+          </h1>
+          <p className="mt-0.5 text-xs text-foreground/60">
+            Quản lý khóa API, mô hình AI và dữ liệu lưu trữ trên thiết bị
+          </p>
+        </div>
+
+        {savedToast && (
+          <div className="flex items-center gap-1.5 rounded-lg bg-success/10 px-3 py-1 text-xs font-medium text-success animate-fade-up">
+            <Check className="h-3.5 w-3.5" />
+            <span>Đã tự động lưu</span>
+          </div>
+        )}
       </header>
 
-      {/* AI */}
+      {/* 1. Gemini AI Configuration */}
       <Section
-        title="Trí tuệ nhân tạo (Gemini)"
-        desc="Key lưu trong localStorage của trình duyệt, chỉ gửi tới server app qua HTTPS khi bạn dùng AI. Ưu tiên hơn key server."
+        icon={Key}
+        title="Trí tuệ Nhân tạo (Google Gemini)"
+        desc="Cấu hình API Key và Model được sử dụng khi gửi prompt dựng hình"
       >
-        <Row label="Gemini API Key">
-          <input
-            type="password"
-            className={inputCls}
-            placeholder="AIza... (để trống = dùng key server)"
-            value={settings.geminiKey}
-            onChange={(e) => update({ geminiKey: e.target.value })}
-            autoComplete="off"
-          />
-        </Row>
-        <Row label="Model">
-          <select
-            className={inputCls}
-            value={settings.geminiModel}
-            onChange={(e) => update({ geminiModel: e.target.value })}
-          >
-            {GEMINI_MODELS.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
-        </Row>
-        <p className="text-xs text-foreground/50">
-          Trạng thái:{" "}
-          <span
-            className={
-              settings.geminiKey.trim()
-                ? "font-medium text-success"
-                : "font-medium text-warning"
-            }
-          >
-            {settings.geminiKey.trim()
-              ? "● Đang dùng key riêng của bạn"
-              : "○ Chưa có key — sẽ dùng key server (nếu có) hoặc báo lỗi"}
-          </span>
-        </p>
-        {saved && <p className="text-xs text-success">Đã lưu ✓</p>}
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs font-medium text-foreground mb-1">
+              Gemini API Key cá nhân (Tùy chọn)
+            </label>
+            <div className="relative">
+              <input
+                type={showKey ? "text" : "password"}
+                value={settings.geminiKey}
+                onChange={(e) => update({ geminiKey: e.target.value })}
+                placeholder="AIzaSy..."
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-xs text-foreground outline-none transition-colors focus:border-primary pr-9"
+              />
+              <button
+                type="button"
+                onClick={() => setShowKey((v) => !v)}
+                className="absolute right-2.5 top-2.5 text-foreground/40 hover:text-foreground"
+              >
+                {showKey ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+              </button>
+            </div>
+            <p className="mt-1 text-[11px] text-foreground/50">
+              Nếu để trống, hệ thống sẽ tự động dùng key cấu hình trên server (nếu có). Key cá nhân được mã hóa lưu trữ local trên máy của bạn.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-foreground mb-1">
+              Phiên bản Model AI
+            </label>
+            <select
+              value={settings.geminiModel}
+              onChange={(e) => update({ geminiModel: e.target.value })}
+              className="w-full rounded-xl border border-border bg-surface px-3 py-2 text-xs text-foreground outline-none transition-colors focus:border-primary"
+            >
+              {GEMINI_MODELS.map((model) => (
+                <option key={model} value={model}>
+                  {model} {model === "gemini-2.5-flash" ? "(Mặc định - Nhanh & chuẩn xác)" : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </Section>
 
-      {/* Appearance */}
-      <Section title="Giao diện" desc="Theme sáng/tối chuyển bằng nút ◐ trên thanh trên cùng.">
-        <Row label="Độ kính mờ (glass)">
-          <select
-            className={inputCls}
-            value={settings.glass}
-            onChange={(e) => update({ glass: Number(e.target.value) as 0 | 1 | 2 })}
-          >
-            <option value={0}>Tắt — nền đặc</option>
-            <option value={1}>Vừa — glass nhẹ</option>
-            <option value={2}>Mạnh — kính mờ đậm</option>
-          </select>
-        </Row>
+      {/* 2. Data & Storage Management */}
+      <Section
+        icon={HardDrive}
+        title="Quản lý Dữ liệu & Bản vẽ"
+        desc="Sao lưu, phục hồi hoặc dọn dẹp các mô hình đã lưu trên trình duyệt"
+      >
+        <div className="space-y-3">
+          <div className="flex items-center justify-between rounded-xl bg-surface-muted/50 p-3 text-xs">
+            <div>
+              <span className="font-semibold text-foreground">
+                Dự án hiện có: {projects.length}
+              </span>
+              <p className="text-[11px] text-foreground/60 mt-0.5">
+                {isSupabaseEnabled()
+                  ? "Đã đồng bộ hóa với Supabase Cloud Database"
+                  : "Đang lưu trữ trong bộ nhớ LocalStorage của trình duyệt"}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void handleExportAll()}
+                disabled={projects.length === 0}
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-muted transition-colors disabled:opacity-40"
+              >
+                <Download className="h-3.5 w-3.5" />
+                <span>Sao lưu JSON</span>
+              </button>
+
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) void handleImportAll(file);
+                  e.target.value = "";
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface-muted transition-colors"
+              >
+                <Upload className="h-3.5 w-3.5" />
+                <span>Khôi phục</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setConfirmClearChat(true)}
+              className="rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-foreground/70 hover:text-danger hover:border-danger/40 transition-colors"
+            >
+              Xóa lịch sử tin nhắn AI
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setConfirmClearAll(true)}
+              className="rounded-lg border border-danger/30 bg-danger/5 px-3 py-1.5 text-xs text-danger hover:bg-danger/10 transition-colors"
+            >
+              Xóa toàn bộ dữ liệu ứng dụng
+            </button>
+          </div>
+        </div>
       </Section>
 
-      {/* Data */}
-      <Section
-        title="Dữ liệu"
-        desc={
-          isSupabaseEnabled()
-            ? "Projects đang lưu cloud qua Supabase (gắn với tài khoản)."
-            : "Projects đang lưu localStorage trên máy này."
-        }
+      {/* Confirm Clear Chat Modal */}
+      <ConfirmDialog
+        isOpen={confirmClearChat}
+        onClose={() => setConfirmClearChat(false)}
+        onConfirm={handleClearChatConfirm}
+        title="Xóa lịch sử tin nhắn?"
+        message="Thao tác này sẽ xóa toàn bộ nội dung hội thoại với AI."
+        confirmText="Xóa tin nhắn"
+        isDestructive={true}
+      />
+
+      {/* Confirm Clear All Data Modal */}
+      <ConfirmDialog
+        isOpen={confirmClearAll}
+        onClose={() => setConfirmClearAll(false)}
+        onConfirm={() => void handleClearAllConfirm()}
+        title="Xóa TOÀN BỘ dữ liệu ứng dụng?"
+        message="Hành động này sẽ xóa vĩnh viễn tất cả dự án, lịch sử chat và cấu hình đã lưu trên trình duyệt này."
+        confirmText="Xóa tất cả"
+        isDestructive={true}
+      />
+
+      {/* Generic Notification Modal */}
+      <Modal
+        isOpen={notificationMsg !== null}
+        onClose={() => setNotificationMsg(null)}
+        title="Thông báo"
+        maxWidth="sm"
       >
-        <div className="flex flex-wrap gap-2">
+        <p className="text-sm text-foreground/80">{notificationMsg}</p>
+        <div className="mt-4 flex justify-end">
           <button
             type="button"
-            onClick={() => void exportAll()}
-            className="rounded-xl border border-border px-4 py-2 text-sm hover:border-primary/50"
+            onClick={() => setNotificationMsg(null)}
+            className="rounded-xl bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
-            ⬇ Export {projects.length} dự án (JSON)
-          </button>
-          <button
-            type="button"
-            onClick={() => fileRef.current?.click()}
-            className="rounded-xl border border-border px-4 py-2 text-sm hover:border-primary/50"
-          >
-            ⬆ Import dự án
-          </button>
-          <button
-            type="button"
-            onClick={clearChat}
-            className="rounded-xl border border-border px-4 py-2 text-sm hover:border-primary/50"
-          >
-            Xóa lịch sử chat
-          </button>
-          <button
-            type="button"
-            onClick={() => void clearAll()}
-            className="rounded-xl border border-danger/40 px-4 py-2 text-sm text-danger hover:bg-danger/10"
-          >
-            Xóa toàn bộ dữ liệu
+            Đóng
           </button>
         </div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="application/json"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void importAll(f);
-            e.target.value = "";
-          }}
-        />
-      </Section>
-
-      {/* About */}
-      <Section title="Giới thiệu">
-        <p className="text-xs leading-relaxed text-foreground/60">
-          GeoGebra AI Studio — dựng hình học bằng ngôn ngữ tự nhiên.
-          Canvas GeoGebra nhúng trực tiếp, AI chỉ phát lệnh qua allowlist
-          an toàn. Phiên bản 0.1.0.
-        </p>
-      </Section>
+      </Modal>
     </div>
   );
 }

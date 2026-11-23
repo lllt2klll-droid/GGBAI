@@ -558,3 +558,47 @@ Tất cả milestone code-only hoàn thành. Còn lại cần user:
 
 ### Kiểm thử
 - vitest: 60/60 pass. lint/typecheck/build: pass (route /settings OK).
+
+
+## Major Redesign & AI Bug Fixes — Clean Professional Design System & Full Mobile Support
+
+### Mục tiêu & Yêu cầu từ USER
+- Fix toàn bộ các lỗi và anti-patterns do AI tạo (loại bỏ window.prompt/confirm/alert, xóa glassmorphism lạm dụng, sửa double topbar, fix Next.js 16 Date.now() prerender error).
+- Redesign toàn diện giao diện & hình thức theo đúng định hướng trong `DESIGN_SYSTEM.md`: Clean, modern, focused, canvas làm trung tâm, màu sắc có ngữ nghĩa giáo dục, icons Lucide chuyên nghiệp thay cho emojis.
+- Hoàn thiện tính năng theo các file đặc tả MD:
+  - Inspector với Object Property Panel (đổi màu, bật/tắt hiển thị, xem tọa độ/giá trị, đổi tên, xóa).
+  - AIChatPanel với ConstructionPlanCard, EditPlanCard diff (Thêm, Sửa, Xóa), ClarificationCard, ImageAnalysisCard có provenance badge.
+  - Workspace Topbar đồng bộ: Tên dự án có thể đổi tên, trạng thái lưu (Đã lưu/Chưa lưu/Đang lưu), Undo/Redo (Ctrl+Z/Ctrl+Y), Export dialog (.ggb, PNG, SVG), Panel collapse toggles, Fullscreen, Theme toggle.
+  - Tối ưu responsive hoàn hảo cả Desktop và Mobile (không đè floating bar lên GeoGebra canvas, tab switcher Canvas/Chat/Inspector trên mobile).
+
+### Các thay đổi chính đã thực hiện
+1. **Design Tokens & Styling (`globals.css`)**:
+   - Khôi phục bảng màu chuẩn theo `DESIGN_SYSTEM.md`: tokens semantic cho light & dark mode.
+   - Loại bỏ hiệu ứng glass/liquid sặc sỡ, mesh gradient gây mất tập trung; thay bằng các lớp bề mặt `.surface-card`, `.surface-panel`, `.surface-toolbar` phẳng và tinh tế.
+2. **Hệ thống Dialog / Modal (`src/components/ui/`)**:
+   - `Modal.tsx`: Hộp thoại modal chuẩn accessibility với backdrop, phím Esc, responsive.
+   - `ConfirmDialog.tsx`: Thay thế toàn bộ `window.confirm` cho các hành động quan trọng/phá hủy (xóa đối tượng, xóa tất cả, áp dụng edit plan, xóa lịch sử, reset dữ liệu).
+   - `PromptDialog.tsx`: Thay thế toàn bộ `window.prompt` (đổi tên dự án, đổi tên đối tượng).
+3. **Workspace Client (`WorkspaceClient.tsx` & `page.tsx`)**:
+   - Thống nhất duy nhất một Topbar chuẩn; loại bỏ duplicate topbar giữa AppShell và WorkspaceClient.
+   - Bổ sung thanh Mẫu nhanh hình học (Tam giác ABC, Tam giác vuông, Đường tròn O-A, Đoạn thẳng PQ, Hình chữ nhật).
+   - Nút thu gọn / mở rộng panel bên trái (AI) và bên phải (Inspector) trên Desktop.
+   - Loại bỏ floating toolbar che khuất thanh công cụ bên dưới của GeoGebra applet.
+   - Khắc phục lỗi prerender Next.js 16 `Date.now()` trong Client Component.
+4. **AI Assistant Panel (`AIChatPanel.tsx`)**:
+   - Hiển thị trực tiếp `ConstructionPlanCard` và `EditPlanCard` với diff thao tác trực quan.
+   - `ClarificationCard` hỗ trợ người dùng bấm chọn trực tiếp các gợi ý làm rõ.
+   - `ImageAnalysisCard` hiển thị ảnh xem trước, các dữ kiện kèm nhãn nguồn (`Đề bài`, `Ký hiệu`, `Suy luận`) và nút bấm dựng hình.
+5. **Inspector Panel (`InspectorPanel.tsx`)**:
+   - Tìm kiếm đối tượng và lọc theo loại (Tất cả, Điểm, Đoạn/Đường, Đa giác, Đường tròn).
+   - Thẻ `ObjectPropertyPanel` cho đối tượng đang chọn: Bảng chọn 8 màu hình học chuẩn, bật/tắt hiển thị, xem giá trị/tọa độ, đổi tên, xóa an toàn có xác nhận.
+6. **Dashboard, Projects, Settings, Auth (`page.tsx`, `ProjectsClient.tsx`, `SettingsClient.tsx`, `LoginClient.tsx`)**:
+   - Thay thế toàn bộ emoji bằng biểu tượng Lucide icons.
+   - Dashboard giáo dục chuyên nghiệp với các mẫu bài toán theo cấp học.
+   - Quản lý dự án dạng lưới thẻ có ngày giờ, đổi tên, nhân bản, xuất và xóa qua modal.
+
+### Kết quả kiểm thử
+- `npm run lint`: 0 errors, 0 warnings.
+- `npm run typecheck`: 0 errors.
+- `npm test`: 9 test suites, 60/60 unit & integration tests PASS.
+- `npm run build`: 11/11 routes biên dịch thành công production build.

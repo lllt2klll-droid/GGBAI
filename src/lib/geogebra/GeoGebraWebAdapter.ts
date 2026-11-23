@@ -295,6 +295,37 @@ export class GeoGebraWebAdapter implements GeoGebraAdapter {
     }
   }
 
+  async setLabelVisible(name: string, visible: boolean): Promise<boolean> {
+    const api = this.requireApi();
+    if (!api.setLabelVisible) {
+      return false;
+    }
+    try {
+      api.setLabelVisible(name, visible);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async renameObject(oldName: string, newName: string): Promise<boolean> {
+    const api = this.requireApi();
+    if (api.renameObject) {
+      try {
+        const ok = api.renameObject(oldName, newName);
+        return ok !== false;
+      } catch {
+        // fallback
+      }
+    }
+    // Fallback: evalCommand
+    try {
+      return api.evalCommand(`Rename(${oldName}, ${newName})`);
+    } catch {
+      return false;
+    }
+  }
+
   async exportSnapshot(): Promise<GeoGebraSnapshot> {
     const api = this.requireApi();
     if (!api.getBase64) {

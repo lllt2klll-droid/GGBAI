@@ -1,60 +1,45 @@
 @import "tailwindcss";
 
-/* Design tokens — glass/liquid design system */
+/* ── Design Tokens theo DESIGN_SYSTEM.md ───────────────── */
 :root {
-  --background: 222 40% 97%;
-  --foreground: 224 35% 14%;
+  --background: 220 30% 98%;
+  --foreground: 224 30% 14%;
   --surface: 0 0% 100%;
-  --surface-muted: 220 30% 95%;
+  --surface-muted: 220 24% 96%;
   --primary: 222 75% 55%;
   --primary-foreground: 0 0% 100%;
   --secondary: 258 55% 62%;
+  --secondary-foreground: 0 0% 100%;
   --accent: 190 80% 45%;
   --success: 150 55% 40%;
   --warning: 38 90% 52%;
   --danger: 0 68% 55%;
-  --border: 220 20% 85%;
-  --glass-bg: 0 0% 100%;
-  --glass-alpha: 0.72;
-  --glass-blur: 18px;
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 22px;
-  --shadow-glass: 0 8px 32px rgb(15 23 42 / 0.08);
+  --border: 220 18% 88%;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
 }
 
 .dark {
-  --background: 226 35% 9%;
-  --foreground: 220 20% 92%;
-  --surface: 224 30% 13%;
-  --surface-muted: 224 26% 17%;
-  --primary: 222 80% 65%;
+  --background: 224 30% 10%;
+  --foreground: 220 20% 94%;
+  --surface: 224 28% 13%;
+  --surface-muted: 224 24% 17%;
+  --primary: 222 80% 64%;
   --primary-foreground: 0 0% 100%;
   --secondary: 258 60% 70%;
+  --secondary-foreground: 0 0% 100%;
   --accent: 190 80% 55%;
-  --success: 150 50% 48%;
+  --success: 150 55% 48%;
   --warning: 38 90% 58%;
-  --danger: 0 68% 62%;
-  --border: 224 22% 26%;
-  --glass-bg: 224 30% 14%;
-  --glass-alpha: 0.6;
-  --shadow-glass: 0 8px 32px rgb(0 0 0 / 0.35);
-}
-
-/* Glass intensity từ settings (data-glass trên <html>) */
-html[data-glass="0"] {
-  --glass-alpha: 1;
-  --glass-blur: 0px;
-}
-html[data-glass="2"] {
-  --glass-alpha: 0.55;
-  --glass-blur: 28px;
-}
-.dark html[data-glass="0"] {
-  --glass-alpha: 1;
-}
-.dark html[data-glass="2"] {
-  --glass-alpha: 0.45;
+  --danger: 0 70% 62%;
+  --border: 224 20% 22%;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.35);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.45);
 }
 
 @theme inline {
@@ -65,6 +50,7 @@ html[data-glass="2"] {
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
   --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
   --color-accent: hsl(var(--accent));
   --color-success: hsl(var(--success));
   --color-warning: hsl(var(--warning));
@@ -73,97 +59,87 @@ html[data-glass="2"] {
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
   --radius-lg: var(--radius-lg);
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 body {
-  background: hsl(var(--background));
+  background-color: hsl(var(--background));
   color: hsl(var(--foreground));
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
 }
 
-/* ── Glass utilities ─────────────────────────────── */
+/* ── Professional Surface Utilities ───────────────────── */
 
-.glass {
-  background: hsl(var(--glass-bg) / var(--glass-alpha));
-  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
-  border: 1px solid hsl(var(--border) / 0.7);
-  box-shadow: var(--shadow-glass);
+.surface-card {
+  background-color: hsl(var(--surface));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
 }
 
-.glass-strong {
-  background: hsl(var(--glass-bg) / calc(var(--glass-alpha) + 0.12));
-  backdrop-filter: blur(calc(var(--glass-blur) + 8px)) saturate(180%);
-  -webkit-backdrop-filter: blur(calc(var(--glass-blur) + 8px)) saturate(180%);
-  border: 1px solid hsl(var(--border) / 0.8);
-  box-shadow: var(--shadow-glass);
+.surface-panel {
+  background-color: hsl(var(--surface));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius-lg);
 }
 
-/* Mesh gradient background cho app shell */
-.app-bg {
-  background:
-    radial-gradient(60rem 40rem at 15% -10%, hsl(var(--primary) / 0.10), transparent 60%),
-    radial-gradient(50rem 35rem at 90% 0%, hsl(var(--secondary) / 0.10), transparent 55%),
-    radial-gradient(45rem 40rem at 50% 110%, hsl(var(--accent) / 0.08), transparent 60%),
-    hsl(var(--background));
-}
-.dark .app-bg {
-  background:
-    radial-gradient(60rem 40rem at 15% -10%, hsl(var(--primary) / 0.16), transparent 60%),
-    radial-gradient(50rem 35rem at 90% 0%, hsl(var(--secondary) / 0.14), transparent 55%),
-    radial-gradient(45rem 40rem at 50% 110%, hsl(var(--accent) / 0.10), transparent 60%),
-    hsl(var(--background));
+.surface-toolbar {
+  background-color: hsl(var(--surface) / 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid hsl(var(--border));
+  box-shadow: var(--shadow-md);
 }
 
-/* Scrollbar mảnh, glass-friendly */
+/* ── Scrollbars ────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--border)) transparent;
 }
 *::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 *::-webkit-scrollbar-thumb {
   background: hsl(var(--border));
-  border-radius: 8px;
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--foreground) / 0.25);
 }
 *::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* Animations */
+/* ── Animations ────────────────────────────────────────── */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes glass-in {
-  from { opacity: 0; transform: scale(0.97); }
-  to { opacity: 1; transform: scale(1); }
-}
-@keyframes shimmer {
-  0% { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.animate-fade-up { animation: fade-up 0.35s ease both; }
-.animate-glass-in { animation: glass-in 0.25s ease both; }
-
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    hsl(var(--surface-muted)) 25%,
-    hsl(var(--border) / 0.5) 50%,
-    hsl(var(--surface-muted)) 75%
-  );
-  background-size: 800px 100%;
-  animation: shimmer 1.4s infinite linear;
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
 }
 
-/* Focus ring đồng nhất */
+.animate-fade-up {
+  animation: fade-up 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ── Focus ─────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid hsl(var(--primary) / 0.6);
+  outline: 2px solid hsl(var(--primary));
   outline-offset: 2px;
 }
 

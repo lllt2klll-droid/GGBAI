@@ -71,6 +71,8 @@ export interface GeoGebraAdapter {
   setPointCoords(name: string, x: number, y: number): Promise<boolean>;
   setObjectColor(name: string, hex: string): Promise<boolean>;
   setObjectVisible(name: string, visible: boolean): Promise<boolean>;
+  setLabelVisible?(name: string, visible: boolean): Promise<boolean>;
+  renameObject?(oldName: string, newName: string): Promise<boolean>;
   exportSnapshot(): Promise<GeoGebraSnapshot>;
   loadSnapshot(snapshot: GeoGebraSnapshot): Promise<void>;
   /** Xuất ảnh canvas (PNG/SVG/JPG) qua GeoGebra exportImage. */
