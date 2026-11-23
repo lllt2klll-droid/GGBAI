@@ -16,7 +16,7 @@ export function resolveGeminiCredentials(req: Request): {
   if (userKey) {
     return {
       apiKey: userKey,
-      model: userModel || process.env.GEMINI_MODEL || "gemini-2.5-flash",
+      model: userModel || process.env.GEMINI_MODEL || "gemini-2.5-pro",
       source: "user",
     };
   }
@@ -24,11 +24,11 @@ export function resolveGeminiCredentials(req: Request): {
   if (envKey) {
     return {
       apiKey: envKey,
-      model: userModel || process.env.GEMINI_MODEL || "gemini-2.5-flash",
+      model: userModel || process.env.GEMINI_MODEL || "gemini-2.5-pro",
       source: "env",
     };
   }
-  return { apiKey: null, model: "gemini-2.5-flash", source: "none" };
+  return { apiKey: null, model: "gemini-2.5-pro", source: "none" };
 }
 
 export function aiNotConfiguredResponse() {

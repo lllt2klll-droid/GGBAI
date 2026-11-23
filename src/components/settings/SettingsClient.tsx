@@ -202,7 +202,12 @@ export function SettingsClient() {
             >
               {GEMINI_MODELS.map((model) => (
                 <option key={model} value={model}>
-                  {model} {model === "gemini-2.5-flash" ? "(Mặc định - Nhanh & chuẩn xác)" : ""}
+                  {model}{" "}
+                  {model === "gemini-2.5-pro"
+                    ? "★ (Mạnh nhất — Suy luận hình học sâu & Max 65K Tokens)"
+                    : model === "gemini-2.5-flash"
+                      ? "(Nhanh & Tiết kiệm Quota)"
+                      : ""}
                 </option>
               ))}
             </select>

@@ -18,9 +18,9 @@ function errorResponse(code: string, message: string, status = 400) {
  * Ảnh chỉ xử lý trong request — KHÔNG lưu trữ (privacy spec).
  */
 export async function POST(req: Request) {
-  const rl = checkRateLimit(clientKey(req, "image-analysis"), 10, 60_000);
+  const rl = checkRateLimit(clientKey(req, "image-analysis"), 30, 60_000);
   if (!rl.ok) {
-    return errorResponse("RATE_LIMITED", "Quá nhiều yêu cầu, thử lại sau", 429);
+    return errorResponse("RATE_LIMITED", "Quá nhiều yêu cầu, thử lại sau ít giây", 429);
   }
 
   const creds = resolveGeminiCredentials(req);

@@ -12,6 +12,7 @@ import {
   Layers,
   Check,
   X,
+  RotateCcw,
 } from "lucide-react";
 import type {
   AIConstructionResponse,
@@ -40,6 +41,7 @@ type ChatMessage = {
   questions?: ClarificationQuestion[];
   imageResult?: ImageAnalysisResult;
   imagePreviewUrl?: string;
+  retryPrompt?: string;
 };
 
 type ApiEnvelope =
@@ -386,7 +388,7 @@ export function AIChatPanel({
       const envelope = (await res.json()) as ApiEnvelope;
 
       if (!envelope.ok) {
-        push({ role: "error", text: envelope.error.message });
+        push({ role: "error", text: envelope.error.message, retryPrompt: prompt });
         return;
       }
 
@@ -400,7 +402,7 @@ export function AIChatPanel({
         return;
       }
       if (data.status === "error") {
-        push({ role: "error", text: data.message });
+        push({ role: "error", text: data.message, retryPrompt: prompt });
         return;
       }
 
@@ -423,6 +425,7 @@ export function AIChatPanel({
       push({
         role: "error",
         text: err instanceof Error ? err.message : "Lỗi kết nối tới AI service",
+        retryPrompt: prompt,
       });
     } finally {
       setLoading(false);
@@ -509,6 +512,19 @@ export function AIChatPanel({
               )}
 
               <p className="whitespace-pre-wrap">{m.text}</p>
+
+              {/* Retry Button on Error */}
+              {m.role === "error" && m.retryPrompt && (
+                <button
+                  type="button"
+                  onClick={() => void submit(m.retryPrompt!)}
+                  disabled={loading}
+                  className="mt-2.5 flex items-center gap-1.5 rounded-lg border border-danger/30 bg-danger/10 px-2.5 py-1 text-[11px] font-medium text-danger hover:bg-danger/20 transition-colors disabled:opacity-40"
+                >
+                  <RotateCcw className="h-3 w-3" />
+                  <span>Thử lại yêu cầu</span>
+                </button>
+              )}
 
               {/* Construction Plan Card */}
               {m.plan && (

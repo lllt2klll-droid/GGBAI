@@ -27,9 +27,9 @@ function errorResponse(
 }
 
 export async function POST(req: Request) {
-  const rl = checkRateLimit(clientKey(req, "constructions"), 20, 60_000);
+  const rl = checkRateLimit(clientKey(req, "constructions"), 60, 60_000);
   if (!rl.ok) {
-    return errorResponse("RATE_LIMITED", "Quá nhiều yêu cầu, thử lại sau", 429);
+    return errorResponse("RATE_LIMITED", "Quá nhiều yêu cầu, thử lại sau ít giây", 429);
   }
 
   let body: unknown;

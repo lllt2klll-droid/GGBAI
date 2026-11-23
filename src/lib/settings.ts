@@ -18,14 +18,15 @@ const KEY = "ggb-ai-settings";
 
 export const DEFAULT_SETTINGS: AppSettings = {
   geminiKey: "",
-  geminiModel: "gemini-2.5-flash",
+  geminiModel: "gemini-2.5-pro",
   glass: 1,
 };
 
 export const GEMINI_MODELS = [
-  "gemini-2.5-flash",
   "gemini-2.5-pro",
+  "gemini-2.5-flash",
   "gemini-2.0-flash",
+  "gemini-1.5-pro",
 ] as const;
 
 export function loadSettings(): AppSettings {
