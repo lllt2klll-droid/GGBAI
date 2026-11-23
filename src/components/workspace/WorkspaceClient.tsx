@@ -192,6 +192,33 @@ export function WorkspaceClient() {
     setRunning(false);
   }, [history]);
 
+  // Keyboard shortcuts: Ctrl+Z undo, Ctrl+Shift+Z / Ctrl+Y redo
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const mod = e.ctrlKey || e.metaKey;
+      if (!mod) return;
+      const key = e.key.toLowerCase();
+      if (key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        void undo();
+      } else if ((key === "z" && e.shiftKey) || key === "y") {
+        e.preventDefault();
+        void redo();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [undo, redo]);
+
   // Tải dự án từ ?load=<id> một lần khi adapter sẵn sàng
   useEffect(() => {
     if (!adapter || loadRequested.current) return;
@@ -301,7 +328,7 @@ export function WorkspaceClient() {
             type="button"
             onClick={() => void undo()}
             disabled={!adapter || running || !canUndo}
-            title="Hoàn tác (xóa đối tượng vừa dựng)"
+            title="Hoàn tác (Ctrl+Z)"
             className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:border-primary/50 disabled:opacity-50"
           >
             ↩ Undo
@@ -310,7 +337,7 @@ export function WorkspaceClient() {
             type="button"
             onClick={() => void redo()}
             disabled={!adapter || running || !canRedo}
-            title="Làm lại"
+            title="Làm lại (Ctrl+Shift+Z / Ctrl+Y)"
             className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:border-primary/50 disabled:opacity-50"
           >
             ↪ Redo
@@ -319,7 +346,7 @@ export function WorkspaceClient() {
             type="button"
             onClick={() => void saveProject()}
             disabled={!adapter || running}
-            title="Lưu dự án vào trình duyệt (localStorage)"
+            title="Lưu dự án (Supabase nếu đã cấu hình, ngược lại localStorage)"
             className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:border-primary/50 disabled:opacity-50"
           >
             💾 Lưu
