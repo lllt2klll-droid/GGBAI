@@ -294,42 +294,6 @@ export function WorkspaceClient() {
     [history],
   );
 
-  /** Xóa objects qua Inspector — snapshot trước/sau để undo được. */
-  const deleteObjects = useCallback(
-    async (names: string[]) => {
-      const a = adapterRef.current;
-      if (!a || names.length === 0) return;
-      let before: GeoGebraSnapshot | null = null;
-      try {
-        before = await a.exportSnapshot();
-      } catch {
-        // snapshot không khả dụng — vẫn xóa, không undo được
-      }
-      for (const name of names) {
-        try {
-          await a.deleteObject(name);
-        } catch {
-          // tiếp tục
-        }
-      }
-      if (before) {
-        try {
-          const after = await a.exportSnapshot();
-          history.push({
-            kind: "snapshot",
-            before,
-            after,
-            label: `Xóa ${names.length} đối tượng`,
-          });
-          bumpHistory();
-        } catch {
-          // ignore
-        }
-      }
-    },
-    [history],
-  );
-
   const canUndo = history.canUndo();
   const canRedo = history.canRedo();
 
@@ -426,11 +390,7 @@ export function WorkspaceClient() {
       </section>
 
       <Panel title="Inspector" className="order-3">
-        <InspectorPanel
-          adapter={adapter}
-          onSelect={setSelectedObject}
-          onDeleteObjects={deleteObjects}
-        />
+        <InspectorPanel adapter={adapter} onSelect={setSelectedObject} />
       </Panel>
     </div>
   );

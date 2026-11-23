@@ -494,29 +494,6 @@ Tất cả milestone code-only hoàn thành. Còn lại cần user:
 ### Kiểm thử
 - lint/typecheck/build: pass.
 
-## Polish 6 — Dark mode toggle
-
-### Đã làm
-- `ThemeToggle` — toggle `.dark` class lên `<html>`, persist
-  localStorage (`ggb-ai-theme`), fallback `prefers-color-scheme`.
-  Dark tokens đã có sẵn trong globals.css.
-- `Topbar` — thêm ThemeToggle bên phải.
-
-### Kiểm thử
-- lint/typecheck/build: pass.
-
-## Polish 7 — Inspector clear-all + undoable delete
-
-### Đã làm
-- `InspectorPanel` — nút "Xóa hết" xóa tất cả đối tượng (confirm).
-- `WorkspaceClient.deleteObjects` — xóa qua Inspector giờ export
-  snapshot trước/sau và push vào CommandHistory → **undo được**
-  (Ctrl+Z). InspectorPanel nhận prop `onDeleteObjects`, fallback
-  adapter.deleteObject nếu không có.
-
-### Kiểm thử
-- lint/typecheck/build: pass.
-
 ## Polish 5 — Project rename/duplicate
 
 ### Đã làm
