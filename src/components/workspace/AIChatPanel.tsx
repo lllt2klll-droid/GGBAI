@@ -13,6 +13,8 @@ import {
   Check,
   X,
   RotateCcw,
+  Code2,
+  Copy,
 } from "lucide-react";
 import type {
   AIConstructionResponse,
@@ -31,6 +33,8 @@ import {
 } from "@/modules/editing";
 import { aiFetch, loadSettings } from "@/lib/settings";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ManualCodeModal } from "./ManualCodeModal";
+import { parseManualCode } from "@/lib/geogebra/manualCodeParser";
 
 type ChatMessage = {
   id: string;
@@ -117,8 +121,49 @@ export function AIChatPanel({
   const [loading, setLoading] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
   const [confirmClearChat, setConfirmClearChat] = useState(false);
+  const [manualCodeModalOpen, setManualCodeModalOpen] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const handleExecuteManualCode = async (
+    commands: SafeGeoGebraCommand[],
+    label: string,
+  ): Promise<boolean> => {
+    push({
+      role: "user",
+      text: `[Mã thủ công] ${label}`,
+    });
+    if (executeCommands) {
+      const result = await executeCommands(commands, "Mã thủ công");
+      push({
+        role: result.failed > 0 ? "error" : "assistant",
+        text:
+          result.failed > 0
+            ? `Đã dựng ${result.ok}/${commands.length} đối tượng (${result.failed} lệnh thất bại: ${result.lastError ?? ""}).`
+            : `Đã hoàn tất dựng ${result.ok} đối tượng lên bản vẽ GeoGebra.`,
+      });
+      return result.ok > 0;
+    }
+    if (adapter) {
+      let ok = 0;
+      let failed = 0;
+      for (const cmd of commands) {
+        const res = await adapter.executeCommand(cmd);
+        if (res.success) ok += 1;
+        else failed += 1;
+      }
+      push({
+        role: failed > 0 ? "error" : "assistant",
+        text:
+          failed > 0
+            ? `Đã dựng ${ok}/${commands.length} đối tượng — ${failed} lệnh thất bại.`
+            : `Đã hoàn tất dựng ${ok} đối tượng lên bản vẽ GeoGebra.`,
+      });
+      return ok > 0;
+    }
+    return false;
+  };
 
   // Load chat history
   useEffect(() => {
@@ -374,6 +419,30 @@ export function AIChatPanel({
     const prompt = text.trim();
     if (!prompt || loading) return;
     setInput("");
+
+    // Tự động nhận diện nếu người dùng dán trực tiếp mã JSON từ AI hoặc script dòng lệnh GeoGebra
+    const looksLikeCode =
+      prompt.startsWith("{") ||
+      prompt.startsWith("[") ||
+      prompt.includes("Polygon(") ||
+      prompt.includes("Segment(") ||
+      prompt.includes("Circle(") ||
+      prompt.includes("Intersect(") ||
+      (prompt.includes("=") && prompt.includes("(") && prompt.includes(")"));
+
+    if (looksLikeCode) {
+      const parsed = parseManualCode(prompt);
+      if (parsed.ok) {
+        setLoading(true);
+        try {
+          await handleExecuteManualCode(parsed.commands, parsed.summary);
+        } finally {
+          setLoading(false);
+        }
+        return;
+      }
+    }
+
     push({ role: "user", text: prompt });
     setLoading(true);
 
@@ -457,14 +526,26 @@ export function AIChatPanel({
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setConfirmClearChat(true)}
-          title="Xóa toàn bộ tin nhắn"
-          className="rounded p-1 text-foreground/40 hover:bg-surface-muted hover:text-danger transition-colors"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setManualCodeModalOpen(true)}
+            title="Nhập hoặc dán mã code / JSON thủ công để dựng hình"
+            className="flex items-center gap-1 rounded-lg border border-border bg-surface px-2 py-1 text-[11px] font-medium text-foreground/80 hover:border-primary/50 hover:text-primary transition-colors"
+          >
+            <Code2 className="h-3 w-3 text-primary" />
+            <span>Nhập code</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setConfirmClearChat(true)}
+            title="Xóa toàn bộ tin nhắn"
+            className="rounded p-1 text-foreground/40 hover:bg-surface-muted hover:text-danger transition-colors"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Messages Scroll Area */}
@@ -529,9 +610,39 @@ export function AIChatPanel({
               {/* Construction Plan Card */}
               {m.plan && (
                 <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 p-2.5 text-foreground">
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary mb-1.5">
-                    <Layers className="h-3.5 w-3.5" />
-                    <span>Kế hoạch dựng hình ({m.plan.operations.length} bước)</span>
+                  <div className="flex items-center justify-between gap-1 text-[11px] font-semibold text-primary mb-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Layers className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">Kế hoạch dựng hình ({m.plan.operations.length} bước)</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const exportData = {
+                          operations: m.plan!.operations.map((op) => ({
+                            commandKey: op.commandKey,
+                            args: op.args,
+                          })),
+                        };
+                        void navigator.clipboard.writeText(JSON.stringify(exportData, null, 2));
+                        setCopiedId(m.id);
+                        setTimeout(() => setCopiedId(null), 2000);
+                      }}
+                      title="Sao chép toàn bộ mã lệnh JSON này"
+                      className="flex items-center gap-1 shrink-0 rounded px-1.5 py-0.5 text-[10px] text-primary/80 hover:bg-primary/10 hover:text-primary transition-colors"
+                    >
+                      {copiedId === m.id ? (
+                        <>
+                          <Check className="h-3 w-3 text-success" />
+                          <span className="text-success font-medium">Đã sao chép</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3 w-3" />
+                          <span>Sao chép mã</span>
+                        </>
+                      )}
+                    </button>
                   </div>
                   <ul className="space-y-1 text-[11px] text-foreground/80 max-h-36 overflow-auto">
                     {m.plan.operations.map((op, idx) => (
@@ -723,6 +834,17 @@ export function AIChatPanel({
             <ImageIcon className="h-4 w-4" />
           </button>
 
+          {/* Manual Code / JSON Input button */}
+          <button
+            type="button"
+            onClick={() => setManualCodeModalOpen(true)}
+            disabled={loading || imageLoading}
+            title="Dán mã JSON / Code thủ công để dựng hình"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border bg-surface text-foreground/60 hover:border-primary/50 hover:text-primary transition-colors disabled:opacity-40"
+          >
+            <Code2 className="h-4 w-4" />
+          </button>
+
           {/* Text Input */}
           <input
             type="text"
@@ -757,6 +879,13 @@ export function AIChatPanel({
         message="Hành động này sẽ xóa toàn bộ các tin nhắn trước đây khỏi trình duyệt của bạn."
         confirmText="Xóa lịch sử"
         isDestructive={true}
+      />
+
+      {/* Manual Code / JSON Input Modal */}
+      <ManualCodeModal
+        isOpen={manualCodeModalOpen}
+        onClose={() => setManualCodeModalOpen(false)}
+        onExecute={handleExecuteManualCode}
       />
     </div>
   );
