@@ -1,26 +1,57 @@
 @import "tailwindcss";
 
+/* Design tokens — DESIGN_SYSTEM.md */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: 220 30% 98%;
+  --foreground: 224 30% 14%;
+  --surface: 0 0% 100%;
+  --surface-muted: 220 24% 96%;
+  --primary: 222 75% 55%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 258 55% 62%;
+  --success: 150 55% 40%;
+  --warning: 38 90% 52%;
+  --danger: 0 68% 55%;
+  --border: 220 18% 88%;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+}
+
+.dark {
+  --background: 224 30% 10%;
+  --foreground: 220 20% 92%;
+  --surface: 224 28% 14%;
+  --surface-muted: 224 24% 18%;
+  --primary: 222 75% 62%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 258 55% 68%;
+  --success: 150 50% 48%;
+  --warning: 38 90% 58%;
+  --danger: 0 68% 62%;
+  --border: 224 20% 24%;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-surface: hsl(var(--surface));
+  --color-surface-muted: hsl(var(--surface-muted));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-success: hsl(var(--success));
+  --color-warning: hsl(var(--warning));
+  --color-danger: hsl(var(--danger));
+  --color-border: hsl(var(--border));
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
 }

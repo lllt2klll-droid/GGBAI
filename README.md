@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GeoGebra AI Studio
 
-## Getting Started
+Ứng dụng dựng hình học bằng AI: mô tả bằng tiếng Việt → GeoGebra canvas,
+chỉnh sửa bằng chat, phân tích ảnh đề bài, lưu/xuất dự án.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 (App Router) + React 19 + TailwindCSS 4
+- GeoGebra Apps API (`deployggb.js`) qua `GeoGebraWebAdapter`
+- Gemini API (text-to-geometry, image analysis, edit plans)
+- Supabase (optional): persistence + auth qua PostgREST/GoTrue REST
+- Vitest (unit) + Playwright (E2E)
+
+## Chạy dev
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Env (`.env.local`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+# Bắt buộc cho AI features (constructions/edits/image-analysis)
+GEMINI_API_KEY=...
+GEMINI_MODEL=gemini-2.5-flash   # optional, default gemini-2.5-flash
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Optional — Supabase persistence + auth (thiếu → fallback localStorage)
+NEXT_PUBLIC_SUPABASE_URL=https://xxx.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+```
 
-## Learn More
+## Supabase setup (optional)
 
-To learn more about Next.js, take a look at the following resources:
+1. Tạo project → lấy URL + anon key.
+2. SQL Editor:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```sql
+create table projects (
+  id text primary key,
+  title text not null,
+  snapshot jsonb not null,
+  saved_at timestamptz not null default now(),
+  user_id uuid references auth.users(id)
+);
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. Authentication → Providers → enable Email.
+4. (Production) Bật RLS: `user_id = auth.uid()` cho select/insert/update/delete.
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run dev          # dev server
+npm run build        # production build
+npm run lint         # eslint
+npm run typecheck    # tsc --noEmit
+npm test             # vitest unit tests
+npm run test:e2e     # playwright (cần npx playwright install chromium trước)
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Kiến trúc chính
+
+- `src/lib/geogebra/` — adapter, command registry (allowlist), history,
+  export, types.
+- `src/modules/ai/` — orchestrator text-to-geometry, Gemini provider.
+- `src/modules/editing/` — deterministic edit parser + AI EditPlan.
+- `src/modules/image-analysis/` — Gemini Vision phân tích ảnh đề.
+- `src/lib/persistence/` — unified store (Supabase ↔ localStorage).
+- `src/lib/auth/` — Supabase Auth (GoTrue REST).
+- `src/app/api/v1/ai/` — 3 API routes: constructions, edits,
+  image-analysis (rate limited + structured logging).
+
+## Deploy (Vercel)
+
+1. Push repo lên GitHub → import vào Vercel.
+2. Set env vars trong Vercel Dashboard (xem `.env.example`).
+3. `GEMINI_API_KEY` là server-only — an toàn trên Vercel.
+4. Lưu ý: rate limit hiện in-memory — trên serverless mỗi instance có
+   counter riêng (giới hạn thực tế = limit × số instance). Production
+   nên chuyển sang Redis/Upstash.
+5. Supabase: chạy SQL tạo bảng `projects` (xem trên) + bật RLS.
+
+## Bảo mật
+
+- AI chỉ phát SafeGeoGebraCommand qua allowlist — không raw command.
+- API keys chỉ ở server (`GEMINI_API_KEY` không NEXT_PUBLIC).
+- Rate limit in-memory per IP (single instance; multi-instance cần Redis).
+- Ảnh upload không lưu trữ — xử lý trong request rồi bỏ.
+
+Chi tiết: `IMPLEMENTATION_LOG.md`, các file `*_SPEC.md` trong repo.
