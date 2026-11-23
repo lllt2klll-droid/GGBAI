@@ -505,6 +505,16 @@ Tất cả milestone code-only hoàn thành. Còn lại cần user:
 ### Kiểm thử
 - lint/typecheck/build: pass.
 
+## Polish 7 — Inspector clear-all
+
+### Đã làm
+- `InspectorPanel` — nút "Xóa hết" xóa tất cả đối tượng (confirm
+  trước). Lưu ý: xóa qua Inspector không đi qua CommandHistory —
+  không undo được (giới hạn hiện tại).
+
+### Kiểm thử
+- lint/typecheck/build: pass.
+
 ## Polish 5 — Project rename/duplicate
 
 ### Đã làm
