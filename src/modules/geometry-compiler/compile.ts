@@ -126,61 +126,62 @@ function compileObject(
     case "segment":
       return {
         commandKey: "segment",
-        args: { p1: name(obj.parents[0]), p2: name(obj.parents[1]) },
+        args: { label: name(obj.id), p1: name(obj.parents[0]), p2: name(obj.parents[1]) },
       };
     case "line":
       return {
         commandKey: "line",
-        args: { p1: name(obj.parents[0]), p2: name(obj.parents[1]) },
+        args: { label: name(obj.id), p1: name(obj.parents[0]), p2: name(obj.parents[1]) },
       };
     case "ray":
       return {
         commandKey: "ray",
-        args: { p1: name(obj.parents[0]), p2: name(obj.parents[1]) },
+        args: { label: name(obj.id), p1: name(obj.parents[0]), p2: name(obj.parents[1]) },
       };
     case "polygon":
     case "triangle":
       return {
         commandKey: "polygon",
-        args: { vertices: obj.parents.map(name).join(",") },
+        args: { label: name(obj.id), vertices: obj.parents.map(name).join(",") },
       };
     case "circle": {
       const def = obj.definition;
       if (def.radius !== undefined) {
         return {
           commandKey: "circle",
-          args: { center: name(def.center), radius: def.radius },
+          args: { label: name(obj.id), center: name(def.center), radius: def.radius },
         };
       }
       return {
         commandKey: "circle",
-        args: { center: name(def.center), through: name(def.through!) },
+        args: { label: name(obj.id), center: name(def.center), through: name(def.through!) },
       };
     }
     case "midpoint":
       return {
         commandKey: "midpoint",
-        args: { p1: name(obj.parents[0]), p2: name(obj.parents[1]) },
+        args: { label: name(obj.id), p1: name(obj.parents[0]), p2: name(obj.parents[1]) },
       };
     case "intersection":
       return {
         commandKey: "intersection",
-        args: { o1: name(obj.definition.a), o2: name(obj.definition.b) },
+        args: { label: name(obj.id), o1: name(obj.definition.a), o2: name(obj.definition.b) },
       };
     case "perpendicular_line":
       return {
         commandKey: "perpendicular_line",
-        args: { point: name(obj.definition.a), line: name(obj.definition.b) },
+        args: { label: name(obj.id), point: name(obj.definition.a), line: name(obj.definition.b) },
       };
     case "parallel_line":
       return {
         commandKey: "parallel_line",
-        args: { point: name(obj.definition.a), line: name(obj.definition.b) },
+        args: { label: name(obj.id), point: name(obj.definition.a), line: name(obj.definition.b) },
       };
     case "angle_bisector":
       return {
         commandKey: "angle_bisector",
         args: {
+          label: name(obj.id),
           vertex: name(obj.definition.a),
           l1: name(obj.definition.b),
           l2: name(obj.definition.c),
@@ -189,7 +190,7 @@ function compileObject(
     case "perpendicular_bisector":
       return {
         commandKey: "perpendicular_bisector",
-        args: { p1: name(obj.definition.a), p2: name(obj.definition.b) },
+        args: { label: name(obj.id), p1: name(obj.definition.a), p2: name(obj.definition.b) },
       };
     default:
       return null;

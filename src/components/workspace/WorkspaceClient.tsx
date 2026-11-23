@@ -15,6 +15,7 @@ import {
   Edit3,
   Sparkles,
   FileDown,
+  Crosshair,
 } from "lucide-react";
 import { GeoGebraContainer } from "@/components/geometry/GeoGebraContainer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -630,6 +631,20 @@ export function WorkspaceClient() {
               </button>
             ))}
 
+            <button
+              type="button"
+              disabled={!adapter}
+              onClick={() => {
+                adapter?.setStandardView?.();
+                setStatusMessage("Đã căn giữa góc nhìn");
+              }}
+              title="Căn giữa góc nhìn chuẩn (Standard View)"
+              className="flex items-center gap-1 shrink-0 rounded-lg border border-border bg-surface px-2.5 py-1 text-xs font-medium text-foreground/80 hover:border-primary/50 hover:text-primary transition-colors disabled:opacity-40"
+            >
+              <Crosshair className="h-3 w-3" />
+              <span>Căn giữa view</span>
+            </button>
+
             {statusMessage && (
               <span className="ml-auto shrink-0 truncate text-xs text-foreground/60 italic">
                 {statusMessage}
@@ -638,7 +653,7 @@ export function WorkspaceClient() {
           </div>
 
           {/* GeoGebra Applet Container */}
-          <div className="relative min-h-0 flex-1 bg-surface">
+          <div className="relative min-h-0 flex-1 flex flex-col h-full w-full bg-surface overflow-hidden">
             <ErrorBoundary>
               <GeoGebraContainer onAdapter={handleAdapter} />
             </ErrorBoundary>

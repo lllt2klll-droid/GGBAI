@@ -175,21 +175,21 @@ describe("Geometry compiler", () => {
       commandKey: byId.get("triangle_abc")!.commandKey,
       args: byId.get("triangle_abc")!.args,
     });
-    expect(tri).toBe("Polygon(A, B, C)");
+    expect(tri).toBe("ABC = Polygon(A, B, C)");
 
     const mid = compileCommand({
       operationId: "t",
       commandKey: byId.get("midpoint_m")!.commandKey,
       args: byId.get("midpoint_m")!.args,
     });
-    expect(mid).toBe("Midpoint(A, B)");
+    expect(mid).toBe("M = Midpoint(A, B)");
 
     const alt = compileCommand({
       operationId: "t",
       commandKey: byId.get("altitude_ah")!.commandKey,
       args: byId.get("altitude_ah")!.args,
     });
-    expect(alt).toBe("PerpendicularLine(A, BC)");
+    expect(alt).toBe("AH = PerpendicularLine(A, BC)");
   });
 
   it("rejects unknown commandKey", () => {

@@ -24,7 +24,7 @@ export function AppShell({
       {/* Main container */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
         {!hideTopbar && <Topbar>{topbar}</Topbar>}
-        <main className="min-h-0 flex-1 overflow-auto pb-14 lg:pb-0">
+        <main className="min-h-0 flex-1 flex flex-col h-full overflow-auto pb-14 lg:pb-0">
           <AuthGuard>{children}</AuthGuard>
         </main>
         {hideTopbar && <MobileBottomNav />}

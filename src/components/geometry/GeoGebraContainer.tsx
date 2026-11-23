@@ -39,22 +39,28 @@ export function GeoGebraContainer({
     adapterRef.current = adapter;
 
     let cancelled = false;
-    adapter
-      .initialize(container)
-      .then(() => {
-        if (cancelled) return;
-        setStatus("ready");
-        onAdapter?.(adapter);
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setStatus("error");
-        setError(err instanceof Error ? err.message : "Không tải được GeoGebra");
-        onAdapter?.(null);
-      });
+
+    // Chờ 1 frame layout để container tính toán kích thước thực tế chính xác
+    const rafId = requestAnimationFrame(() => {
+      if (cancelled) return;
+      adapter
+        .initialize(container)
+        .then(() => {
+          if (cancelled) return;
+          setStatus("ready");
+          onAdapter?.(adapter);
+        })
+        .catch((err: unknown) => {
+          if (cancelled) return;
+          setStatus("error");
+          setError(err instanceof Error ? err.message : "Không tải được GeoGebra");
+          onAdapter?.(null);
+        });
+    });
 
     return () => {
       cancelled = true;
+      cancelAnimationFrame(rafId);
       adapter.destroy();
       adapterRef.current = null;
       onAdapter?.(null);
@@ -63,8 +69,10 @@ export function GeoGebraContainer({
   }, [retryKey]);
 
   return (
-    <div className={`relative h-full w-full ${className}`}>
-      <div ref={containerRef} className="h-full w-full" />
+    <div
+      className={`geogebra-container-responsive relative flex-1 h-full w-full min-h-0 overflow-hidden ${className}`}
+    >
+      <div ref={containerRef} className="relative h-full w-full min-h-0 flex-1 overflow-hidden" />
 
       {status === "loading" && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-surface/90 backdrop-blur-xs text-xs text-foreground/70">

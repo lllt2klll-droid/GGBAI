@@ -70,6 +70,9 @@ export class GeoGebraWebAdapter implements GeoGebraAdapter {
   private listeners = new Set<GeoGebraEventListener>();
   private apiListenerIds: number[] = [];
   private destroyed = false;
+  private resizeObserver: ResizeObserver | null = null;
+  private resizeRaf: number | null = null;
+  private windowResizeHandler: (() => void) | null = null;
 
   constructor(private readonly options: GeoGebraWebAdapterOptions = {}) {}
 
@@ -91,17 +94,37 @@ export class GeoGebraWebAdapter implements GeoGebraAdapter {
         throw new GeoGebraError("APPLET_LOAD_FAILED", "GGBApplet undefined");
       }
 
+      const rect = container.getBoundingClientRect();
+      const initialW = Math.max(Math.floor(rect.width || container.clientWidth || 800), 300);
+      const initialH = Math.max(Math.floor(rect.height || container.clientHeight || 600), 300);
+
       const params: GGBAppletParams = {
         appName: this.options.appName ?? "geometry",
-        width: this.options.width ?? 800,
-        height: this.options.height ?? 600,
+        width: this.options.width ?? initialW,
+        height: this.options.height ?? initialH,
+        // Không dùng scaleContainerClass vì nó scale bằng CSS transform (giữ tỷ lệ aspect ratio cố định gây dải trắng).
+        // Dùng setSize(w, h) + ResizeObserver để applet fill 100% diện tích container.
+        autoHeight: false,
+        allowStyleBar: true,
         showToolBar: this.options.showToolBar ?? true,
         showAlgebraInput: this.options.showAlgebraInput ?? true,
         showMenuBar: this.options.showMenuBar ?? false,
+        enableShiftDragZoom: true,
+        borderColor: "transparent",
+        language: "vi",
+        useBrowserForJS: true,
+        showResetIcon: false,
+        enableRightClick: true,
+        errorDialogsActive: false,
         ...this.options.extraParams,
         appletOnLoad: (api) => {
           this.api = api;
           this.bindApiListeners();
+          this.applyResponsiveSize();
+          this.setupResizeObserver();
+          // Gọi bổ sung sau khi GeoGebra dựng xong toàn bộ DOM thanh công cụ
+          setTimeout(() => this.applyResponsiveSize(), 150);
+          setTimeout(() => this.applyResponsiveSize(), 400);
         },
       };
 
@@ -111,6 +134,9 @@ export class GeoGebraWebAdapter implements GeoGebraAdapter {
       holder.id = elementId;
       holder.style.width = "100%";
       holder.style.height = "100%";
+      holder.style.position = "absolute";
+      holder.style.inset = "0";
+      holder.style.overflow = "hidden";
       container.appendChild(holder);
 
       this.applet = new GGBApplet(params, true);
@@ -123,6 +149,10 @@ export class GeoGebraWebAdapter implements GeoGebraAdapter {
         if (api) {
           this.api = api;
           this.bindApiListeners();
+          this.applyResponsiveSize();
+          this.setupResizeObserver();
+          setTimeout(() => this.applyResponsiveSize(), 150);
+          setTimeout(() => this.applyResponsiveSize(), 400);
           break;
         }
         await new Promise((r) => setTimeout(r, 200));
@@ -171,7 +201,7 @@ export class GeoGebraWebAdapter implements GeoGebraAdapter {
       try {
         const result = api.evalCommand(input);
         clearTimeout(timer);
-        resolve(result);
+        resolve(result !== false);
       } catch {
         clearTimeout(timer);
         resolve(false);
@@ -420,8 +450,88 @@ export class GeoGebraWebAdapter implements GeoGebraAdapter {
     bind(api.registerObjectUpdateListener?.bind(api), "update");
   }
 
+  resize(width: number, height: number): void {
+    if (this.api?.setSize) {
+      try {
+        this.api.setSize(width, height);
+        this.api.recalculateEnvironments?.();
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  setStandardView(): void {
+    if (this.api?.setStandardView) {
+      try {
+        this.api.setStandardView();
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  private applyResponsiveSize() {
+    if (!this.api || !this.container) return;
+    const rect = this.container.getBoundingClientRect();
+    const w = Math.floor(rect.width || this.container.clientWidth);
+    const h = Math.floor(rect.height || this.container.clientHeight);
+    if (w > 50 && h > 50) {
+      if (this.api.setSize) {
+        try {
+          this.api.setSize(w, h);
+          this.api.recalculateEnvironments?.();
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }
+
+  private setupResizeObserver() {
+    if (!this.container) return;
+
+    const onResize = () => {
+      if (this.resizeRaf !== null) {
+        cancelAnimationFrame(this.resizeRaf);
+      }
+      this.resizeRaf = requestAnimationFrame(() => {
+        this.resizeRaf = null;
+        this.applyResponsiveSize();
+      });
+    };
+
+    if (typeof ResizeObserver !== "undefined") {
+      if (this.resizeObserver) {
+        this.resizeObserver.disconnect();
+      }
+      this.resizeObserver = new ResizeObserver(onResize);
+      this.resizeObserver.observe(this.container);
+    }
+
+    if (typeof window !== "undefined") {
+      if (this.windowResizeHandler) {
+        window.removeEventListener("resize", this.windowResizeHandler);
+      }
+      this.windowResizeHandler = onResize;
+      window.addEventListener("resize", this.windowResizeHandler);
+    }
+  }
+
   destroy(): void {
     this.destroyed = true;
+    if (this.resizeRaf !== null) {
+      cancelAnimationFrame(this.resizeRaf);
+      this.resizeRaf = null;
+    }
+    if (this.windowResizeHandler && typeof window !== "undefined") {
+      window.removeEventListener("resize", this.windowResizeHandler);
+      this.windowResizeHandler = null;
+    }
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+      this.resizeObserver = null;
+    }
     const api = this.api;
     if (api?.unregisterListener) {
       for (const id of this.apiListenerIds) {

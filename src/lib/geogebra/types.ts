@@ -73,6 +73,8 @@ export interface GeoGebraAdapter {
   setObjectVisible(name: string, visible: boolean): Promise<boolean>;
   setLabelVisible?(name: string, visible: boolean): Promise<boolean>;
   renameObject?(oldName: string, newName: string): Promise<boolean>;
+  resize?(width: number, height: number): void;
+  setStandardView?(): void;
   exportSnapshot(): Promise<GeoGebraSnapshot>;
   loadSnapshot(snapshot: GeoGebraSnapshot): Promise<void>;
   /** Xuất ảnh canvas (PNG/SVG/JPG) qua GeoGebra exportImage. */

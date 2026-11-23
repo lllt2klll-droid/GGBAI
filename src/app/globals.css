@@ -84,6 +84,49 @@ body {
   border-radius: var(--radius-lg);
 }
 
+/* ── GeoGebra Applet Fullscreen & Responsive Fixes ────── */
+.geogebra-container-responsive {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 0% !important;
+}
+
+/* GGBApplet tạo holder div → article → iframe/canvas chain.
+   Phải target tất cả các wrapper elements */
+.geogebra-container-responsive > div,
+.geogebra-container-responsive > div > div,
+.geogebra-container-responsive article,
+.geogebra-container-responsive .GeoGebraFrame,
+.geogebra-container-responsive iframe {
+  flex: 1 1 0% !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* GGBApplet tự inject inline style width/height vào article.
+   Dùng attribute selector để override inline style */
+.geogebra-container-responsive article[style] {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Canvas hiển thị block, kích thước chuẩn do GeoGebra setSize quản lý (tránh méo pixel) */
+.geogebra-container-responsive canvas {
+  display: block !important;
+}
+
 .surface-toolbar {
   background-color: hsl(var(--surface) / 0.95);
   backdrop-filter: blur(8px);

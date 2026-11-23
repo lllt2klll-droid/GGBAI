@@ -20,6 +20,10 @@ export interface GGBApi {
   setLabelVisible?(name: string, visible: boolean): void;
   renameObject?(oldName: string, newName: string): boolean;
   deleteObject?(name: string): void;
+  setSize?(width: number, height: number): void;
+  recalculateEnvironments?(): void;
+  setStandardView?(): void;
+  reset?(): void;
   getBase64?(): string;
   setBase64?(data: string): boolean;
   /** Xuất ảnh canvas — format: png/svg/jpg/jpeg/webp. Trả void, tự download. */
