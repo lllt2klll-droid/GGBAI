@@ -13,9 +13,12 @@ type ObjectInfo = {
 export function InspectorPanel({
   adapter,
   onSelect,
+  onDeleteObjects,
 }: {
   adapter: GeoGebraAdapter | null;
   onSelect?: (name: string | null) => void;
+  /** Xóa có snapshot history (undo được). Fallback: adapter.deleteObject. */
+  onDeleteObjects?: (names: string[]) => Promise<void>;
 }) {
   const [objects, setObjects] = useState<ObjectInfo[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -58,12 +61,34 @@ export function InspectorPanel({
   const remove = async (name: string) => {
     if (!adapter) return;
     try {
-      await adapter.deleteObject(name);
+      if (onDeleteObjects) {
+        await onDeleteObjects([name]);
+      } else {
+        await adapter.deleteObject(name);
+      }
       setSelected(null);
       await refresh();
     } catch {
       // ignore
     }
+  };
+
+  const clearAll = async () => {
+    if (!adapter || objects.length === 0) return;
+    if (!window.confirm(`Xóa tất cả ${objects.length} đối tượng?`)) return;
+    if (onDeleteObjects) {
+      await onDeleteObjects(objects.map((o) => o.name));
+    } else {
+      for (const obj of objects) {
+        try {
+          await adapter.deleteObject(obj.name);
+        } catch {
+          // tiếp tục xóa phần còn lại
+        }
+      }
+    }
+    setSelected(null);
+    await refresh();
   };
 
   if (!adapter) {
@@ -80,13 +105,25 @@ export function InspectorPanel({
         <span className="text-xs text-foreground/60">
           {objects.length} đối tượng
         </span>
-        <button
-          type="button"
-          onClick={() => void refresh()}
-          className="text-xs text-primary hover:underline"
-        >
-          Làm mới
-        </button>
+        <div className="flex items-center gap-2">
+          {objects.length > 0 && (
+            <button
+              type="button"
+              onClick={() => void clearAll()}
+              title="Xóa tất cả đối tượng"
+              className="text-xs text-danger hover:underline"
+            >
+              Xóa hết
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => void refresh()}
+            className="text-xs text-primary hover:underline"
+          >
+            Làm mới
+          </button>
+        </div>
       </div>
       <ul className="min-h-0 flex-1 overflow-auto">
         {objects.length === 0 && (
