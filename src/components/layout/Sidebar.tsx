@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: "▦" },
   { href: "/projects", label: "Dự án", icon: "▤" },
   { href: "/workspace", label: "Workspace", icon: "✎" },
+  { href: "/settings", label: "Cài đặt", icon: "⚙" },
 ] as const;
 
 export function Sidebar() {
@@ -28,9 +29,14 @@ export function Sidebar() {
   }, [pathname]);
 
   return (
-    <aside className="flex h-full w-60 shrink-0 flex-col border-r border-border bg-surface">
-      <div className="flex h-14 items-center gap-2 border-b border-border px-4">
-        <span className="text-lg font-semibold text-primary">GeoGebra AI Studio</span>
+    <aside className="glass flex h-full w-60 shrink-0 flex-col">
+      <div className="flex h-14 items-center gap-2 border-b border-border/60 px-4">
+        <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-lg font-bold text-transparent">
+          GeoGebra AI
+        </span>
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+          Studio
+        </span>
       </div>
       <nav className="flex-1 space-y-1 p-3" aria-label="Điều hướng chính">
         {NAV_ITEMS.map((item) => {
@@ -41,13 +47,13 @@ export function Sidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all",
                 active
-                  ? "bg-primary/10 font-medium text-primary"
-                  : "text-foreground/80 hover:bg-surface-muted hover:text-foreground",
+                  ? "bg-primary/15 font-medium text-primary shadow-sm"
+                  : "text-foreground/75 hover:bg-surface-muted/80 hover:text-foreground",
               )}
             >
-              <span aria-hidden="true" className="w-5 text-center">
+              <span aria-hidden="true" className="w-5 text-center text-base">
                 {item.icon}
               </span>
               {item.label}
@@ -55,7 +61,7 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="border-t border-border p-3 text-xs text-foreground/60">
+      <div className="border-t border-border/60 p-3 text-xs text-foreground/60">
         {isAuthEnabled() ? (
           user ? (
             <div className="flex items-center justify-between gap-2">
@@ -80,7 +86,7 @@ export function Sidebar() {
             </Link>
           )
         ) : (
-          "MVP — đang phát triển"
+          "Bản local — dữ liệu trên máy này"
         )}
       </div>
     </aside>

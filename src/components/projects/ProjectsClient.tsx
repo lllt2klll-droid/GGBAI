@@ -44,7 +44,7 @@ export function ProjectsClient() {
 
   if (projects.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-border bg-surface p-10 text-center">
+      <div className="glass animate-fade-up rounded-2xl p-10 text-center">
         <p className="text-sm text-foreground/70">Chưa có dự án nào.</p>
         <p className="mt-2 text-xs text-foreground/50">
           Dựng hình trong Workspace rồi bấm “💾 Lưu”.
@@ -67,7 +67,7 @@ export function ProjectsClient() {
       {projects.map((p) => (
         <li
           key={p.id}
-          className="flex items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3"
+          className="glass flex animate-fade-up items-center gap-3 rounded-2xl px-4 py-3 transition-all hover:border-primary/40"
         >
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{p.title}</p>

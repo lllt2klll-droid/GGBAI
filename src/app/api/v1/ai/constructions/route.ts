@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createProviderFromEnv } from "@/modules/ai/geminiProvider";
+import { GeminiProvider } from "@/modules/ai/geminiProvider";
 import { handleTextToGeometry } from "@/modules/ai/orchestrator";
 import type { AIConstructionResponse } from "@/modules/ai/types";
 import { checkRateLimit, clientKey } from "@/lib/rateLimit";
 import { logAIUsage, logEvent } from "@/lib/observability";
+import { aiNotConfiguredResponse, resolveGeminiCredentials } from "@/lib/aiConfig";
 
 const requestSchema = z.object({
   prompt: z.string().min(1).max(2000),
@@ -48,14 +49,11 @@ export async function POST(req: Request) {
     );
   }
 
-  const provider = createProviderFromEnv();
-  if (!provider) {
-    return errorResponse(
-      "AI_NOT_CONFIGURED",
-      "Chưa cấu hình GEMINI_API_KEY trên server",
-      503,
-    );
+  const creds = resolveGeminiCredentials(req);
+  if (!creds.apiKey) {
+    return aiNotConfiguredResponse();
   }
+  const provider = new GeminiProvider(creds.apiKey, creds.model);
 
   const started = Date.now();
   try {

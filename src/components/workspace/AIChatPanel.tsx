@@ -16,6 +16,7 @@ import {
   parseEditCommand,
   type EditPlan,
 } from "@/modules/editing";
+import { aiFetch, loadSettings } from "@/lib/settings";
 
 type ChatMessage = {
   id: string;
@@ -157,7 +158,7 @@ export function AIChatPanel({
     try {
       const form = new FormData();
       form.append("file", file);
-      const res = await fetch("/api/v1/ai/image-analysis", {
+      const res = await aiFetch("/api/v1/ai/image-analysis", {
         method: "POST",
         body: form,
       });
@@ -272,7 +273,7 @@ export function AIChatPanel({
       })),
     );
 
-    const res = await fetch("/api/v1/ai/edits", {
+    const res = await aiFetch("/api/v1/ai/edits", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ prompt, objects }),
@@ -317,7 +318,7 @@ export function AIChatPanel({
 
     try {
       if (await tryEditCommand(prompt)) return;
-      const res = await fetch("/api/v1/ai/constructions", {
+      const res = await aiFetch("/api/v1/ai/constructions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, mode: "2d" }),
@@ -360,20 +361,32 @@ export function AIChatPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex items-center justify-between border-b border-border px-3 py-1.5">
+      <div className="flex items-center justify-between border-b border-border/60 px-3 py-1.5">
         <span className="text-xs font-medium text-foreground/60">
           Lịch sử được lưu local trên máy này
         </span>
-        <button
-          type="button"
-          onClick={() => {
-            localStorage.removeItem(CHAT_KEY);
-            setMessages([messages[0]]);
-          }}
-          className="text-xs text-foreground/50 hover:text-danger"
-        >
-          Xóa lịch sử
-        </button>
+        <div className="flex items-center gap-2">
+          <span
+            className="text-[10px]"
+            title="Nguồn Gemini API key — đổi trong Cài đặt"
+          >
+            {loadSettings().geminiKey.trim() ? (
+              <span className="text-success">● key riêng</span>
+            ) : (
+              <span className="text-warning">○ key server</span>
+            )}
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              localStorage.removeItem(CHAT_KEY);
+              setMessages([messages[0]]);
+            }}
+            className="text-xs text-foreground/50 hover:text-danger"
+          >
+            Xóa lịch sử
+          </button>
+        </div>
       </div>
       <div className="min-h-0 flex-1 space-y-3 overflow-auto p-3">
         {messages.map((m) => (

@@ -526,3 +526,35 @@ Tất cả milestone code-only hoàn thành. Còn lại cần user:
 
 ### Kiểm thử
 - lint/typecheck/build: pass.
+
+## Redesign — Glass UI + Settings + Fullscreen (Vercel-ready)
+
+### Đã làm
+- `globals.css` — design system glass/liquid: tokens `--glass-*`,
+  `.glass`/`.glass-strong`, `.app-bg` mesh gradient, scrollbar, skeleton,
+  animations, `data-glass` intensity (0/1/2), dark mode đầy đủ.
+- `src/lib/settings.ts` — client settings store (localStorage
+  `ggb-ai-settings`): geminiKey, geminiModel, glass; `aiFetch` wrapper
+  gắn `x-gemini-key`/`x-gemini-model` headers.
+- `src/lib/aiConfig.ts` — server `resolveGeminiCredentials`: ưu tiên
+  header user key → fallback env; `aiNotConfiguredResponse`.
+- 3 AI routes (constructions/edits/image-analysis) dùng resolver mới —
+  user key hoạt động không cần env server.
+- `SettingsSync` — áp `data-glass` lên `<html>`.
+- `AppShell` — responsive: sidebar desktop, bottom nav mobile
+  (`h-dvh`, `pb-16` cho nav).
+- `Sidebar`/`Topbar` — glass, nav thêm Cài đặt, bottom nav mobile.
+- `WorkspaceClient` — panels glass, floating toolbar (undo/redo/save/
+  export/fullscreen), fullscreen mode (`requestFullscreen` trên section
+  canvas), mobile tab switcher Canvas/Chat/Inspector.
+- `/settings` page — Gemini key + model + glass + data
+  export/import/clear.
+- `AIChatPanel` — dùng `aiFetch`, badge trạng thái key (riêng/server).
+- Dashboard + Projects — glass cards, gradient title.
+
+### Bảo mật
+- Key user chỉ lưu localStorage, gửi qua TLS tới server mình qua header;
+  server không log key; không NEXT_PUBLIC.
+
+### Kiểm thử
+- vitest: 60/60 pass. lint/typecheck/build: pass (route /settings OK).

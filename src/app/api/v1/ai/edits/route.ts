@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { editRequestSchema, generateEditPlan } from "@/modules/editing";
 import { checkRateLimit, clientKey } from "@/lib/rateLimit";
 import { logAIUsage, logEvent } from "@/lib/observability";
+import { aiNotConfiguredResponse, resolveGeminiCredentials } from "@/lib/aiConfig";
 
 function errorResponse(code: string, message: string, status = 400) {
   return NextResponse.json({ ok: false, error: { code, message } }, { status });
@@ -18,11 +19,12 @@ export async function POST(req: Request) {
     return errorResponse("RATE_LIMITED", "Quá nhiều yêu cầu, thử lại sau", 429);
   }
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    return errorResponse("AI_NOT_CONFIGURED", "Chưa cấu hình GEMINI_API_KEY", 503);
+  const creds = resolveGeminiCredentials(req);
+  if (!creds.apiKey) {
+    return aiNotConfiguredResponse();
   }
-  const model = process.env.GEMINI_MODEL ?? "gemini-2.5-flash";
+  const apiKey = creds.apiKey;
+  const model = creds.model;
 
   let body: unknown;
   try {

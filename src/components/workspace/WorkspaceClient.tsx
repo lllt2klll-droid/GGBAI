@@ -68,13 +68,37 @@ function Panel({
 }) {
   return (
     <section
-      className={`flex min-h-0 flex-col rounded-lg border border-border bg-surface ${className}`}
+      className={`glass flex min-h-0 flex-col rounded-2xl ${className}`}
     >
-      <h2 className="border-b border-border px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-foreground/60">
+      <h2 className="border-b border-border/60 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-widest text-foreground/50">
         {title}
       </h2>
       <div className="min-h-0 flex-1 overflow-auto">{children}</div>
     </section>
+  );
+}
+
+function ToolButton({
+  onClick,
+  disabled,
+  title,
+  children,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className="flex h-9 w-9 items-center justify-center rounded-xl text-sm transition-all hover:bg-primary/10 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      {children}
+    </button>
   );
 }
 
@@ -87,6 +111,9 @@ export function WorkspaceClient() {
   const [selectedObject, setSelectedObject] = useState<string | null>(null);
   const [, setHistoryTick] = useState(0);
   const loadRequested = useRef(false);
+  const fsRef = useRef<HTMLElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"canvas" | "chat" | "inspector">("canvas");
 
   const bumpHistory = () => setHistoryTick((t) => t + 1);
 
@@ -333,105 +360,132 @@ export function WorkspaceClient() {
   const canUndo = history.canUndo();
   const canRedo = history.canRedo();
 
+  const toggleFullscreen = useCallback(() => {
+    const el = fsRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      void document.exitFullscreen();
+    } else {
+      void el.requestFullscreen?.();
+    }
+  }, []);
+
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => document.removeEventListener("fullscreenchange", onFsChange);
+  }, []);
+
+  const mobileVisible = (tab: "canvas" | "chat" | "inspector") =>
+    mobileTab === tab ? "" : "max-lg:hidden";
+
   return (
-    <div className="grid h-full grid-cols-1 gap-3 p-3 lg:grid-cols-[320px_1fr_280px]">
-      <Panel title="AI Assistant" className="order-2 lg:order-1">
-        <AIChatPanel
-          adapter={adapter}
-          executeCommands={runCommands}
-          selectedObject={selectedObject}
-          onEditApplied={recordEdit}
-        />
-      </Panel>
+    <div className="flex h-full min-h-0 flex-col gap-3 p-3">
+      {/* Mobile tab switcher */}
+      <div className="glass flex gap-1 rounded-2xl p-1 lg:hidden">
+        {(
+          [
+            ["canvas", "🖥 Canvas"],
+            ["chat", "💬 AI Chat"],
+            ["inspector", "🔍 Inspector"],
+          ] as const
+        ).map(([tab, label]) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setMobileTab(tab)}
+            className={`flex-1 rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
+              mobileTab === tab
+                ? "bg-primary text-primary-foreground"
+                : "text-foreground/60"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-      <section className="order-1 flex min-h-0 flex-col overflow-hidden rounded-lg border border-border bg-surface lg:order-2">
-        <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2">
-          <span className="text-xs font-medium text-foreground/60">Dựng nhanh:</span>
-          {DEMO_ACTIONS.map((action) => (
-            <button
-              key={action.label}
-              type="button"
-              disabled={!adapter || running}
-              onClick={() => runAction(action)}
-              title={action.description}
-              className="rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium transition-colors hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {action.label}
-            </button>
-          ))}
-          <span className="mx-1 h-4 w-px bg-border" />
-          <button
-            type="button"
-            onClick={() => void undo()}
-            disabled={!adapter || running || !canUndo}
-            title="Hoàn tác (Ctrl+Z)"
-            className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:border-primary/50 disabled:opacity-50"
-          >
-            ↩ Undo
-          </button>
-          <button
-            type="button"
-            onClick={() => void redo()}
-            disabled={!adapter || running || !canRedo}
-            title="Làm lại (Ctrl+Shift+Z / Ctrl+Y)"
-            className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:border-primary/50 disabled:opacity-50"
-          >
-            ↪ Redo
-          </button>
-          <button
-            type="button"
-            onClick={() => void saveProject()}
-            disabled={!adapter || running}
-            title="Lưu dự án (Supabase nếu đã cấu hình, ngược lại localStorage)"
-            className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:border-primary/50 disabled:opacity-50"
-          >
-            💾 Lưu
-          </button>
-          <button
-            type="button"
-            onClick={() => void exportProject()}
-            disabled={!adapter || running}
-            title="Xuất file .ggb"
-            className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:border-primary/50 disabled:opacity-50"
-          >
-            ⬇ .ggb
-          </button>
-          <button
-            type="button"
-            onClick={() => void exportImage("png")}
-            disabled={!adapter || running}
-            title="Xuất ảnh PNG"
-            className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:border-primary/50 disabled:opacity-50"
-          >
-            PNG
-          </button>
-          <button
-            type="button"
-            onClick={() => void exportImage("svg")}
-            disabled={!adapter || running}
-            title="Xuất ảnh SVG"
-            className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium hover:border-primary/50 disabled:opacity-50"
-          >
-            SVG
-          </button>
-          {message && (
-            <span className="ml-auto text-xs text-foreground/70">{message}</span>
-          )}
-        </div>
-        <div className="min-h-0 flex-1">
-          <ErrorBoundary>
-            <GeoGebraContainer onAdapter={handleAdapter} />
-          </ErrorBoundary>
-        </div>
-      </section>
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[300px_minmax(0,1fr)_300px]">
+        <Panel title="AI Assistant" className={`order-2 min-h-0 lg:order-1 ${mobileVisible("chat")}`}>
+          <AIChatPanel
+            adapter={adapter}
+            executeCommands={runCommands}
+            selectedObject={selectedObject}
+            onEditApplied={recordEdit}
+          />
+        </Panel>
 
-      <Panel title="Inspector" className="order-3">
-        <InspectorPanel
-          adapter={adapter}
-          onSelect={setSelectedObject}
-          onDeleteObjects={deleteObjects}
-        />
-      </Panel>
+        <section
+          ref={fsRef}
+          className={`glass relative order-1 flex min-h-0 flex-col overflow-hidden rounded-2xl lg:order-2 ${mobileVisible("canvas")}`}
+        >
+          {/* Slim header: demo actions + status */}
+          <div className="flex items-center gap-1.5 overflow-x-auto border-b border-border/60 px-3 py-2">
+            <span className="shrink-0 text-[11px] font-semibold uppercase tracking-widest text-foreground/50">
+              Mẫu:
+            </span>
+            {DEMO_ACTIONS.map((action) => (
+              <button
+                key={action.label}
+                type="button"
+                disabled={!adapter || running}
+                onClick={() => runAction(action)}
+                title={action.description}
+                className="shrink-0 rounded-lg border border-border/70 bg-surface/60 px-2.5 py-1 text-xs font-medium transition-colors hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {action.label}
+              </button>
+            ))}
+            {message && (
+              <span className="ml-auto shrink-0 truncate text-xs text-foreground/60">
+                {message}
+              </span>
+            )}
+          </div>
+
+          {/* Canvas */}
+          <div className="relative min-h-0 flex-1">
+            <ErrorBoundary>
+              <GeoGebraContainer onAdapter={handleAdapter} />
+            </ErrorBoundary>
+
+            {/* Floating toolbar */}
+            <div className="glass-strong absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-0.5 rounded-2xl p-1.5 animate-glass-in">
+              <ToolButton onClick={() => void undo()} disabled={!adapter || running || !canUndo} title="Hoàn tác (Ctrl+Z)">
+                ↩
+              </ToolButton>
+              <ToolButton onClick={() => void redo()} disabled={!adapter || running || !canRedo} title="Làm lại (Ctrl+Y)">
+                ↪
+              </ToolButton>
+              <span className="mx-0.5 h-5 w-px bg-border/70" />
+              <ToolButton onClick={() => void saveProject()} disabled={!adapter || running} title="Lưu dự án">
+                💾
+              </ToolButton>
+              <ToolButton onClick={() => void exportProject()} disabled={!adapter || running} title="Xuất .ggb">
+                ⬇
+              </ToolButton>
+              <ToolButton onClick={() => void exportImage("png")} disabled={!adapter || running} title="Xuất PNG">
+                PNG
+              </ToolButton>
+              <ToolButton onClick={() => void exportImage("svg")} disabled={!adapter || running} title="Xuất SVG">
+                SVG
+              </ToolButton>
+              <span className="mx-0.5 h-5 w-px bg-border/70" />
+              <ToolButton onClick={toggleFullscreen} title={isFullscreen ? "Thoát toàn màn hình (Esc)" : "Toàn màn hình"}>
+                {isFullscreen ? "🗗" : "⛶"}
+              </ToolButton>
+            </div>
+          </div>
+        </section>
+
+        <Panel title="Inspector" className={`order-3 min-h-0 lg:order-3 ${mobileVisible("inspector")}`}>
+          <InspectorPanel
+            adapter={adapter}
+            onSelect={setSelectedObject}
+            onDeleteObjects={deleteObjects}
+          />
+        </Panel>
+      </div>
     </div>
   );
 }

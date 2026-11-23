@@ -71,6 +71,15 @@ npm run test:e2e     # playwright (cần npx playwright install chromium trướ
 - `src/app/api/v1/ai/` — 3 API routes: constructions, edits,
   image-analysis (rate limited + structured logging).
 
+## Cài đặt (trang /settings)
+
+- **Gemini API key**: nhập key riêng → lưu `localStorage`, gửi kèm header
+  `x-gemini-key` tới server app (TLS). Ưu tiên hơn `GEMINI_API_KEY` env.
+  Không key → fallback env server → báo `AI_NOT_CONFIGURED`.
+- **Model**: chọn gemini-2.5-flash / pro / 2.0-flash.
+- **Glass intensity**: tắt / vừa / mạnh (attribute `data-glass` trên `<html>`).
+- **Data**: export/import toàn bộ projects (JSON), xóa chat, xóa hết local data.
+
 ## Deploy (Vercel)
 
 1. Push repo lên GitHub → import vào Vercel.
