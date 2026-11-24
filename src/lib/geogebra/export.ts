@@ -36,6 +36,7 @@ export type LocalProject = {
   title: string;
   snapshot: GeoGebraSnapshot;
   savedAt: string;
+  mode?: "2d" | "3d";
 };
 
 const KEY = "ggb-ai-projects";

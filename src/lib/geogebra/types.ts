@@ -73,6 +73,7 @@ export interface GeoGebraAdapter {
   setObjectVisible(name: string, visible: boolean): Promise<boolean>;
   setLabelVisible?(name: string, visible: boolean): Promise<boolean>;
   renameObject?(oldName: string, newName: string): Promise<boolean>;
+  selectObject?(name: string | null): Promise<boolean>;
   resize?(width: number, height: number): void;
   setStandardView?(): void;
   exportSnapshot(): Promise<GeoGebraSnapshot>;

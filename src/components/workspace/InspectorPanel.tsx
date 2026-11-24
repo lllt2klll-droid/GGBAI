@@ -94,10 +94,13 @@ export function InspectorPanel({
     };
   }, [adapter, refresh]);
 
-  const handleSelect = (name: string) => {
+  const handleSelect = async (name: string) => {
     const next = activeObject === name ? null : name;
     setLocalSelected(next);
     onSelect?.(next);
+    if (adapter?.selectObject) {
+      await adapter.selectObject(next);
+    }
   };
 
   const handleToggleVisibility = async (name: string, e?: React.MouseEvent) => {

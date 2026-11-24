@@ -14,21 +14,37 @@ const SAMPLE_PROMPTS = [
     title: "Tam giác cân & đường cao",
     prompt: "Tam giác ABC cân tại A, đường cao AH, trung điểm M của BC",
     badge: "Hình học 8",
+    mode: "2d",
   },
   {
     title: "Đường tròn & tiếp tuyến",
     prompt: "Đường tròn tâm O bán kính 3cm, từ điểm A ngoài đường tròn kẻ hai tiếp tuyến AB và AC",
     badge: "Hình học 9",
+    mode: "2d",
+  },
+  {
+    title: "Hình chóp tam giác S.ABC (3D)",
+    prompt: "Hình chóp S.ABC có đáy là tam giác vuông tại B, SA vuông góc với đáy",
+    badge: "Hình học 11 - 3D",
+    mode: "3d",
+  },
+  {
+    title: "Khối lập phương ABCD.A'B'C' (3D)",
+    prompt: "Hình lập phương ABCD.A'B'C' cạnh 3, gốc tọa độ tại A",
+    badge: "Hình học 12 - 3D",
+    mode: "3d",
   },
   {
     title: "Hình bình hành & đường chéo",
     prompt: "Hình bình hành ABCD có AB = 6, AD = 4, giao điểm hai đường chéo là O",
     badge: "Hình học 8",
+    mode: "2d",
   },
   {
     title: "Tam giác vuông & đường trung tuyến",
     prompt: "Tam giác ABC vuông tại A, trung tuyến AM, đường cao AH",
     badge: "Hình học 7 - 9",
+    mode: "2d",
   },
 ];
 
@@ -135,7 +151,7 @@ export default function DashboardPage() {
             {SAMPLE_PROMPTS.map((sample) => (
               <Link
                 key={sample.title}
-                href="/workspace"
+                href={`/workspace?prompt=${encodeURIComponent(sample.prompt)}&mode=${sample.mode}`}
                 className="surface-card group p-4 transition-all hover:border-primary/50 hover:shadow-sm flex flex-col justify-between"
               >
                 <div>

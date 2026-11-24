@@ -16,6 +16,9 @@ import {
   Sparkles,
   FileDown,
   Crosshair,
+  ZoomIn,
+  ZoomOut,
+  Trash2,
 } from "lucide-react";
 import { GeoGebraContainer } from "@/components/geometry/GeoGebraContainer";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -34,6 +37,7 @@ import type {
   SafeGeoGebraCommand,
 } from "@/lib/geogebra/types";
 import { PromptDialog } from "@/components/ui/PromptDialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Modal } from "@/components/ui/Modal";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 
@@ -169,7 +173,20 @@ export function WorkspaceClient() {
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [mobileTab, setMobileTab] = useState<"canvas" | "chat" | "inspector">("canvas");
   const [objectCount, setObjectCount] = useState(0);
-  const [mode, setMode] = useState<"2d" | "3d">("2d");
+  const [mode, setMode] = useState<"2d" | "3d">(() => {
+    if (typeof window !== "undefined") {
+      const m = new URLSearchParams(window.location.search).get("mode");
+      if (m === "3d" || m === "2d") return m;
+    }
+    return "2d";
+  });
+  const [initialPrompt] = useState<string | undefined>(() => {
+    if (typeof window !== "undefined") {
+      return new URLSearchParams(window.location.search).get("prompt") ?? undefined;
+    }
+    return undefined;
+  });
+  const [confirmClearAll, setConfirmClearAll] = useState(false);
 
   const bumpHistory = () => setHistoryTick((t) => t + 1);
 
@@ -334,6 +351,9 @@ export function WorkspaceClient() {
           return;
         }
         try {
+          if (project.mode && project.mode !== mode) {
+            setMode(project.mode);
+          }
           await adapter.loadSnapshot(project.snapshot);
           setProjectTitle(project.title);
           setProjectId(project.id);
@@ -345,7 +365,7 @@ export function WorkspaceClient() {
       })();
     }, 0);
     return () => clearTimeout(t);
-  }, [adapter]);
+  }, [adapter, mode]);
 
   // Save Project
   const handleSave = useCallback(
@@ -365,6 +385,7 @@ export function WorkspaceClient() {
           title: title || "Dự án không tên",
           snapshot,
           savedAt: new Date().toISOString(),
+          mode,
         });
         setSaveStatus("saved");
         setStatusMessage(`Đã lưu dự án: ${title}`);
@@ -373,7 +394,7 @@ export function WorkspaceClient() {
         setStatusMessage(err instanceof Error ? err.message : "Lưu dự án thất bại");
       }
     },
-    [projectId, projectTitle],
+    [projectId, projectTitle, mode],
   );
 
   const handleRenameSubmit = (newTitle: string) => {
@@ -452,6 +473,22 @@ export function WorkspaceClient() {
     },
     [history],
   );
+
+  const handleClearAll = useCallback(async () => {
+    const a = adapterRef.current;
+    if (!a) return;
+    try {
+      const names = await a.getObjectNames();
+      if (names.length > 0) {
+        await deleteObjects(names);
+        setStatusMessage("Đã xóa toàn bộ đối tượng trên bản vẽ");
+      }
+    } catch {
+      // ignore
+    } finally {
+      setConfirmClearAll(false);
+    }
+  }, [deleteObjects]);
 
   const toggleFullscreen = useCallback(() => {
     const el = workspaceRef.current;
@@ -693,6 +730,7 @@ export function WorkspaceClient() {
             selectedObject={selectedObject}
             onEditApplied={recordEdit}
             mode={mode}
+            initialPrompt={initialPrompt}
           />
         </section>
 
@@ -743,7 +781,7 @@ export function WorkspaceClient() {
           </div>
 
           {/* GeoGebra Applet Container */}
-          <div className="relative min-h-0 flex-1 flex flex-col h-full w-full bg-surface overflow-hidden">
+          <div className="relative min-h-0 flex-1 flex flex-col h-full w-full bg-surface overflow-hidden group">
             <ErrorBoundary>
               <GeoGebraContainer
                 key={mode}
@@ -751,6 +789,62 @@ export function WorkspaceClient() {
                 onAdapter={handleAdapter}
               />
             </ErrorBoundary>
+
+            {/* Floating Canvas Controls Overlay */}
+            <div className="absolute bottom-3 right-3 flex items-center gap-1 rounded-xl border border-border/80 bg-surface/90 backdrop-blur-md p-1 shadow-md transition-opacity">
+              <button
+                type="button"
+                disabled={!adapter}
+                onClick={() => {
+                  try {
+                    (adapter as unknown as { api?: { evalCommand: (s: string) => void } }).api?.evalCommand("ZoomIn()");
+                  } catch {
+                    // ignore
+                  }
+                }}
+                title="Phóng to canvas"
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-foreground/70 hover:bg-surface-muted hover:text-foreground transition-colors disabled:opacity-30"
+              >
+                <ZoomIn className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                disabled={!adapter}
+                onClick={() => {
+                  try {
+                    (adapter as unknown as { api?: { evalCommand: (s: string) => void } }).api?.evalCommand("ZoomOut()");
+                  } catch {
+                    // ignore
+                  }
+                }}
+                title="Thu nhỏ canvas"
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-foreground/70 hover:bg-surface-muted hover:text-foreground transition-colors disabled:opacity-30"
+              >
+                <ZoomOut className="h-3.5 w-3.5" />
+              </button>
+              <span className="h-4 w-px bg-border/80" />
+              <button
+                type="button"
+                disabled={!adapter}
+                onClick={() => {
+                  adapter?.setStandardView?.();
+                  setStatusMessage("Đã căn giữa góc nhìn chuẩn");
+                }}
+                title="Căn giữa góc nhìn chuẩn"
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-foreground/70 hover:bg-surface-muted hover:text-foreground transition-colors disabled:opacity-30"
+              >
+                <Crosshair className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                disabled={!adapter || objectCount === 0}
+                onClick={() => setConfirmClearAll(true)}
+                title="Xóa toàn bộ bản vẽ"
+                className="flex h-7 w-7 items-center justify-center rounded-lg text-foreground/70 hover:bg-danger/10 hover:text-danger transition-colors disabled:opacity-30"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         </section>
 
@@ -867,6 +961,17 @@ export function WorkspaceClient() {
           </button>
         </div>
       </Modal>
+
+      {/* Clear All Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmClearAll}
+        onClose={() => setConfirmClearAll(false)}
+        onConfirm={() => void handleClearAll()}
+        title="Xóa toàn bộ bản vẽ?"
+        message="Hành động này sẽ xóa tất cả các điểm, đường và hình học đang có trên bản vẽ GeoGebra. Bạn có thể bấm Hoàn tác (Ctrl+Z) để khôi phục lại."
+        confirmText="Xóa toàn bộ"
+        isDestructive={true}
+      />
     </div>
   );
 }

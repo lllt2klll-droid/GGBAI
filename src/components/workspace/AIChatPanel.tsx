@@ -97,6 +97,7 @@ export function AIChatPanel({
   selectedObject,
   onEditApplied,
   mode = "2d",
+  initialPrompt,
 }: {
   adapter: GeoGebraAdapter | null;
   executeCommands?: (
@@ -110,8 +111,9 @@ export function AIChatPanel({
     label: string,
   ) => void;
   mode?: "2d" | "3d";
+  initialPrompt?: string;
 }) {
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialPrompt ?? "");
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
@@ -181,6 +183,14 @@ export function AIChatPanel({
     }, 0);
     return () => clearTimeout(t);
   }, []);
+
+  // Set initial prompt from URL query param if provided
+  useEffect(() => {
+    if (initialPrompt) {
+      const t = setTimeout(() => setInput(initialPrompt), 0);
+      return () => clearTimeout(t);
+    }
+  }, [initialPrompt]);
 
   // Save chat history
   useEffect(() => {
@@ -799,6 +809,32 @@ export function AIChatPanel({
                 {prompt}
               </button>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Active selected object quick modifier banner */}
+      {selectedObject && (
+        <div className="flex items-center justify-between border-t border-border/60 bg-primary/5 px-3 py-1.5 text-xs text-primary">
+          <span className="flex items-center gap-1.5 font-medium truncate">
+            <span>Đang chọn:</span>
+            <strong className="rounded bg-primary/10 px-1.5 py-0.5 font-mono">{selectedObject}</strong>
+          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setInput(`Đổi màu đối tượng ${selectedObject} thành màu đỏ`)}
+              className="text-[11px] underline opacity-80 hover:opacity-100"
+            >
+              Đổi màu
+            </button>
+            <button
+              type="button"
+              onClick={() => setInput(`Đổi tên đối tượng ${selectedObject} thành `)}
+              className="text-[11px] underline opacity-80 hover:opacity-100"
+            >
+              Đổi tên
+            </button>
           </div>
         </div>
       )}

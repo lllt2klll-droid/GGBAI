@@ -132,9 +132,22 @@ export function ProjectsClient() {
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <FileText className="h-4 w-4" />
                   </div>
-                  <h3 className="font-semibold text-sm text-foreground truncate" title={p.title}>
-                    {p.title}
-                  </h3>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-sm text-foreground truncate" title={p.title}>
+                      {p.title}
+                    </h3>
+                    <div className="mt-0.5">
+                      <span
+                        className={`inline-flex items-center rounded-full px-1.5 py-0.2 text-[10px] font-medium ${
+                          p.mode === "3d"
+                            ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                            : "bg-primary/10 text-primary"
+                        }`}
+                      >
+                        {p.mode === "3d" ? "3D Không gian" : "2D Mặt phẳng"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -174,7 +187,7 @@ export function ProjectsClient() {
               </div>
 
               <Link
-                href={`/workspace?load=${p.id}`}
+                href={`/workspace?load=${p.id}${p.mode ? `&mode=${p.mode}` : ""}`}
                 className="flex items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary hover:bg-primary hover:text-primary-foreground transition-colors"
               >
                 <span>Mở</span>

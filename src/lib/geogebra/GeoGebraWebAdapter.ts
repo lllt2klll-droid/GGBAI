@@ -218,6 +218,10 @@ export class GeoGebraWebAdapter implements GeoGebraAdapter {
       }
     }
 
+    if (ok) {
+      this.emit({ type: "add" });
+    }
+
     return {
       operationId: command.operationId,
       success: ok,
@@ -277,6 +281,7 @@ export class GeoGebraWebAdapter implements GeoGebraAdapter {
     }
     try {
       api.deleteObject(name);
+      this.emit({ type: "remove", objectName: name });
       return true;
     } catch {
       return false;
@@ -290,6 +295,7 @@ export class GeoGebraWebAdapter implements GeoGebraAdapter {
     }
     try {
       api.setCoords(name, x, y);
+      this.emit({ type: "update", objectName: name });
       return true;
     } catch {
       return false;
@@ -306,6 +312,7 @@ export class GeoGebraWebAdapter implements GeoGebraAdapter {
     const n = parseInt(m[1], 16);
     try {
       api.setColor(name, (n >> 16) & 255, (n >> 8) & 255, n & 255);
+      this.emit({ type: "update", objectName: name });
       return true;
     } catch {
       return false;
@@ -319,6 +326,7 @@ export class GeoGebraWebAdapter implements GeoGebraAdapter {
     }
     try {
       api.setVisible(name, visible);
+      this.emit({ type: "update", objectName: name });
       return true;
     } catch {
       return false;
@@ -332,6 +340,7 @@ export class GeoGebraWebAdapter implements GeoGebraAdapter {
     }
     try {
       api.setLabelVisible(name, visible);
+      this.emit({ type: "update", objectName: name });
       return true;
     } catch {
       return false;
@@ -343,14 +352,35 @@ export class GeoGebraWebAdapter implements GeoGebraAdapter {
     if (api.renameObject) {
       try {
         const ok = api.renameObject(oldName, newName);
-        return ok !== false;
+        if (ok !== false) {
+          this.emit({ type: "update", objectName: newName });
+          return true;
+        }
       } catch {
         // fallback
       }
     }
     // Fallback: evalCommand
     try {
-      return api.evalCommand(`Rename(${oldName}, ${newName})`);
+      const ok = api.evalCommand(`Rename(${oldName}, ${newName})`);
+      if (ok !== false) {
+        this.emit({ type: "update", objectName: newName });
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  }
+
+  async selectObject(name: string | null): Promise<boolean> {
+    const api = this.api;
+    if (!api) return false;
+    try {
+      if (!name) {
+        return api.evalCommand("SelectObjects()");
+      }
+      return api.evalCommand(`SelectObjects(${name})`);
     } catch {
       return false;
     }
