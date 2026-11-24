@@ -65,6 +65,7 @@ export async function handleTextToGeometry(
   const result = await provider.generateGeometry(
     prompt,
     request.gradeLevel,
+    request.mode ?? "2d",
   );
   if (!result.ok) {
     return { status: "error", code: result.code, message: result.message };

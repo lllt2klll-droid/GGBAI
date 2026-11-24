@@ -55,5 +55,9 @@ export type ProviderResult =
 
 export interface AIProvider {
   readonly name: string;
-  generateGeometry(prompt: string, context?: string): Promise<ProviderResult>;
+  generateGeometry(
+    prompt: string,
+    context?: string,
+    mode?: "2d" | "3d" | "graphing",
+  ): Promise<ProviderResult>;
 }

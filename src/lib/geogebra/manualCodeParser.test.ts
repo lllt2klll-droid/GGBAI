@@ -141,6 +141,71 @@ describe("parseManualCode", () => {
     }
   });
 
+  it("parses full circle + tangent script with styling commands", () => {
+    const script = `
+      // comment line
+      A = (-5, 0)
+      B = (5, 0)
+      O = Midpoint(A, B)
+      c = Circle(O, A)
+      C = (-1.4, 4.8)
+      tC = Tangent(C, c)
+      M = Intersect(tC, c)
+      hAB = Line(A, B)
+      H = OrthogonalProjection(C, hAB)
+      dAM = Line(A, M)
+      E = Intersect(dAM, c, 2)
+      Segment(A, B)
+      SetColor(c, 0, 0.35, 0.9)
+      SetLineThickness(c, 4)
+      ShowLabel(A, true)
+      ZoomIn(-7, -2, 8, 8)
+    `;
+
+    const result = parseManualCode(script);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const keys = result.commands.map((c) => c.commandKey);
+      expect(keys).toContain("orthogonal_projection");
+      expect(keys).toContain("set_color");
+      expect(keys).toContain("set_line_thickness");
+      expect(keys).toContain("show_label");
+      expect(keys).toContain("zoom_in");
+      const interE = result.commands.find((c) => c.args.label === "E");
+      expect(interE).toMatchObject({ commandKey: "intersection", args: { o1: "dAM", o2: "c", index: 2 } });
+      const colorC = result.commands.find((c) => c.commandKey === "set_color");
+      expect(colorC?.args).toMatchObject({ obj: "c", r: 0, g: 0.35, b: 0.9 });
+    }
+  });
+
+  it("parses bracket syntax, function def, and 3-point circle", () => {
+    const script = `
+      A = (0, 0)
+      B = (4, 0)
+      C = (2, 3)
+      f(x) = x^2
+      P = Intersect[Line(A, B), Line(B, C)]
+      cc = Circle[A, B, C]
+      rp = RegularPolygon(A, B, 6)
+      d = Derivative(f)
+      r = Root(f, -5, 5)
+    `;
+
+    const result = parseManualCode(script);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      const keys = result.commands.map((c) => c.commandKey);
+      expect(keys).toContain("function");
+      expect(keys).toContain("intersection");
+      expect(keys).toContain("circumcircle");
+      expect(keys).toContain("regular_polygon");
+      expect(keys).toContain("derivative");
+      expect(keys).toContain("root");
+      const fn = result.commands.find((c) => c.commandKey === "function");
+      expect(fn?.args).toMatchObject({ name: "f", var: "x", expr: "x^2" });
+    }
+  });
+
   it("returns error on invalid input", () => {
     const result = parseManualCode("InvalidUnknownCommand(xyz)");
     expect(result.ok).toBe(false);

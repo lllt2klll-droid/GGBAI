@@ -127,9 +127,18 @@ const registry: Record<string, Template> = {
   parallel_line: (args) =>
     `${labelPrefix(args)}ParallelLine(${pointRef(args, "point")}, ${pointRef(args, "line")})`,
 
-  /** Giao điểm của hai đối tượng */
-  intersection: (args) =>
-    `${labelPrefix(args)}Intersect(${pointRef(args, "o1")}, ${pointRef(args, "o2")})`,
+  /** Giao điểm của hai đối tượng, tùy chọn index cho giao điểm thứ n */
+  intersection: (args) => {
+    const base = `${labelPrefix(args)}Intersect(${pointRef(args, "o1")}, ${pointRef(args, "o2")}`;
+    if (args.index !== undefined) {
+      return `${base}, ${num(args, "index")})`;
+    }
+    return `${base})`;
+  },
+
+  /** Hình chiếu vuông góc: OrthogonalProjection(point, line) */
+  orthogonal_projection: (args) =>
+    `${labelPrefix(args)}OrthogonalProjection(${pointRef(args, "point")}, ${pointRef(args, "line")})`,
 
   /** Phân giác góc tại đỉnh giữa hai đường tham chiếu */
   angle_bisector: (args) =>
@@ -270,6 +279,163 @@ const registry: Record<string, Template> = {
   /** Mặt phẳng: Plane(p1, p2, p3) */
   plane: (args) =>
     `${labelPrefix(args)}Plane(${pointRef(args, "p1")}, ${pointRef(args, "p2")}, ${pointRef(args, "p3")})`,
+
+  /** Đa giác đều: RegularPolygon(p1, p2, n) */
+  regular_polygon: (args) =>
+    `${labelPrefix(args)}RegularPolygon(${pointRef(args, "p1")}, ${pointRef(args, "p2")}, ${num(args, "n")})`,
+
+  /** Vector vuông góc: PerpendicularVector(v) */
+  perpendicular_vector: (args) =>
+    `${labelPrefix(args)}PerpendicularVector(${str(args, "v")})`,
+
+  /** Vector đơn vị: UnitVector(v) */
+  unit_vector: (args) =>
+    `${labelPrefix(args)}UnitVector(${str(args, "v")})`,
+
+  /** Vector vuông góc đơn vị: UnitPerpendicularVector(v) */
+  unit_perpendicular_vector: (args) =>
+    `${labelPrefix(args)}UnitPerpendicularVector(${str(args, "v")})`,
+
+  /** Đường cực: PolarLine(point, conic) */
+  polar_line: (args) =>
+    `${labelPrefix(args)}PolarLine(${pointRef(args, "point")}, ${str(args, "conic")})`,
+
+  /** Parabol: Parabola(focus, directrix) */
+  parabola: (args) =>
+    `${labelPrefix(args)}Parabola(${pointRef(args, "focus")}, ${pointRef(args, "directrix")})`,
+
+  /** Hyperbol: Hyperbola(f1, f2, a) */
+  hyperbola: (args) =>
+    `${labelPrefix(args)}Hyperbola(${pointRef(args, "f1")}, ${pointRef(args, "f2")}, ${num(args, "a")})`,
+
+  /** Đạo hàm: Derivative(f) hoặc Derivative(f, var, val) */
+  derivative: (args) => {
+    const f = str(args, "f");
+    if (args.var && args.val !== undefined) {
+      return `${labelPrefix(args)}Derivative(${f}, ${str(args, "var")}, ${num(args, "val")})`;
+    }
+    return `${labelPrefix(args)}Derivative(${f})`;
+  },
+
+  /** Tích phân xác định: Integral(f, a, b) */
+  integral: (args) =>
+    `${labelPrefix(args)}Integral(${str(args, "f")}, ${num(args, "a")}, ${num(args, "b")})`,
+
+  /** Tích phân giữa hai đường: IntegralBetween(f, a, b, x) */
+  integral_between: (args) =>
+    `${labelPrefix(args)}IntegralBetween(${str(args, "f")}, ${num(args, "a")}, ${num(args, "b")}, ${str(args, "x")})`,
+
+  /** Cực trị: Extremum(f, a, b) */
+  extremum: (args) =>
+    `${labelPrefix(args)}Extremum(${str(args, "f")}, ${num(args, "a")}, ${num(args, "b")})`,
+
+  /** Điểm uốn: Inflection(f) */
+  inflection: (args) =>
+    `${labelPrefix(args)}Inflection(${str(args, "f")})`,
+
+  /** Nghiệm: Root(f) hoặc Root(f, a, b) */
+  root: (args) => {
+    const f = str(args, "f");
+    if (args.a !== undefined && args.b !== undefined) {
+      return `${labelPrefix(args)}Root(${f}, ${num(args, "a")}, ${num(args, "b")})`;
+    }
+    return `${labelPrefix(args)}Root(${f})`;
+  },
+
+  /** Dãy số: Sequence(expr, var, start, end) */
+  sequence: (args) =>
+    `${labelPrefix(args)}Sequence(${str(args, "expr")}, ${str(args, "var")}, ${num(args, "start")}, ${num(args, "end")})`,
+
+  /** Hàm số: f(x) = expr */
+  function: (args) =>
+    `${str(args, "name")}(${str(args, "var")}) = ${str(args, "expr")}`,
+
+  /** Đổi màu: SetColor(obj, r, g, b) — r,g,b ∈ [0,1] */
+  set_color: (args) =>
+    `SetColor(${str(args, "obj")}, ${num(args, "r")}, ${num(args, "g")}, ${num(args, "b")})`,
+
+  /** Độ dày nét: SetLineThickness(obj, n) */
+  set_line_thickness: (args) =>
+    `SetLineThickness(${str(args, "obj")}, ${num(args, "thickness")})`,
+
+  /** Hiện/ẩn nhãn: ShowLabel(obj, true|false) */
+  show_label: (args) =>
+    `ShowLabel(${str(args, "obj")}, ${args.visible === false || args.visible === "false" ? "false" : "true"})`,
+
+  /** Phóng to canvas */
+  zoom_in: () => `ZoomIn()`,
+
+  /** Thu nhỏ canvas */
+  zoom_out: () => `ZoomOut()`,
+
+  /** Về góc nhìn chuẩn */
+  standard_view: () => `SetStandardView()`,
+
+  // ── Lệnh chuyên sâu ──
+
+  /** Điểm gần nhất: ClosestPoint(point, target) */
+  closest_point: (args) =>
+    `${labelPrefix(args)}ClosestPoint(${pointRef(args, "point")}, ${pointRef(args, "target")})`,
+
+  /** Điểm trên đường cong theo tham số: Point(target, t) */
+  point_on: (args) =>
+    `${labelPrefix(args)}Point(${pointRef(args, "target")}, ${num(args, "t")})`,
+
+  /** Quỹ tích: Locus(dep, driver) */
+  locus: (args) =>
+    `${labelPrefix(args)}Locus(${str(args, "dep")}, ${str(args, "driver")})`,
+
+  /** Lưới khối đa diện 3D: Net(obj) */
+  net: (args) =>
+    `${labelPrefix(args)}Net(${str(args, "obj")})`,
+
+  /** Chu vi: Perimeter(target) */
+  perimeter: (args) =>
+    `${labelPrefix(args)}Perimeter(${str(args, "target")})`,
+
+  /** Hệ số góc: Slope(target) */
+  slope: (args) =>
+    `${labelPrefix(args)}Slope(${str(args, "target")})`,
+
+  /** Bán kính: Radius(target) */
+  radius: (args) =>
+    `${labelPrefix(args)}Radius(${str(args, "target")})`,
+
+  /** Nửa đường tròn: Semicircle(p1, p2) */
+  semicircle: (args) =>
+    `${labelPrefix(args)}Semicircle(${pointRef(args, "p1")}, ${pointRef(args, "p2")})`,
+
+  /** Diện tích giữa hai hàm: Area(f, g, a, b) */
+  area_between: (args) =>
+    `${labelPrefix(args)}Area(${str(args, "f")}, ${str(args, "g")}, ${num(args, "a")}, ${num(args, "b")})`,
+
+  /** Tổng dãy: Sum(expr, var, start, end) */
+  sum: (args) =>
+    `${labelPrefix(args)}Sum(${str(args, "expr")}, ${str(args, "var")}, ${num(args, "start")}, ${num(args, "end")})`,
+
+  /** Tích dãy: Product(expr, var, start, end) */
+  product: (args) =>
+    `${labelPrefix(args)}Product(${str(args, "expr")}, ${str(args, "var")}, ${num(args, "start")}, ${num(args, "end")})`,
+
+  /** Hiện/ẩn đối tượng: SetVisible(obj, true|false) */
+  set_visible: (args) =>
+    `SetVisible(${str(args, "obj")}, ${args.visible === false || args.visible === "false" ? "false" : "true"})`,
+
+  /** Kích thước điểm: SetPointSize(obj, n) */
+  set_point_size: (args) =>
+    `SetPointSize(${str(args, "obj")}, ${num(args, "size")})`,
+
+  /** Kiểu nét: SetLineStyle(obj, n) */
+  set_line_style: (args) =>
+    `SetLineStyle(${str(args, "obj")}, ${num(args, "style")})`,
+
+  /** Hiện/ẩn trục: SetAxesVisible(true|false) */
+  set_axes_visible: (args) =>
+    `SetAxesVisible(${args.visible === false || args.visible === "false" ? "false" : "true"})`,
+
+  /** Hiện/ẩn lưới: SetGridVisible(true|false) */
+  set_grid_visible: (args) =>
+    `SetGridVisible(${args.visible === false || args.visible === "false" ? "false" : "true"})`,
 };
 
 export function isAllowedCommandKey(key: string): boolean {

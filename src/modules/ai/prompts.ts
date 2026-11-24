@@ -77,6 +77,16 @@ Output:
 {"id":"altitude_ah","label":"AH","kind":"perpendicular_line","definition":{"a":"point_a","b":"segment_bc"},"parents":[],"visibility":"visible","provenance":"ai_generated"}
 ],"constraints":[{"id":"con_ab_ac","kind":"equal_length","references":["point_a","point_b","point_c"],"source":"problem_text","required":true}],"facts":[{"id":"fact_1","statement":"Tam giác ABC cân tại A","sourceType":"problem_text","confirmed":false}]} `;
 
-export function buildUserPrompt(prompt: string, mode: string, gradeLevel?: string): string {
-  return `Yêu cầu: ${prompt}\nMode: ${mode}${gradeLevel ? `\nCấp học: ${gradeLevel}` : ""}\n\nXuất GeometryDocument JSON:`;
+export function buildUserPrompt(
+  prompt: string,
+  mode: string,
+  gradeLevel?: string,
+): string {
+  const modeHint =
+    mode === "3d"
+      ? "\n\nLƯU Ý QUAN TRỌNG: Mode 3d — bắt buộc dùng các kind không gian (sphere, cube, pyramid, prism, cylinder, cone, plane) và tọa độ [x, y, z] cho point. KHÔNG dựng hình phẳng 2D."
+      : mode === "graphing"
+        ? "\n\nLƯU Ý: Mode graphing — ưu tiên hàm số, đồ thị, tọa độ 2D."
+        : "";
+  return `Yêu cầu: ${prompt}\nMode: ${mode}${gradeLevel ? `\nCấp học: ${gradeLevel}` : ""}${modeHint}\n\nXuất GeometryDocument JSON:`;
 }

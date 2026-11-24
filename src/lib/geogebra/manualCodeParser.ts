@@ -15,6 +15,25 @@ export type ParseManualCodeResult =
       error: string;
     };
 
+/** Tách tham số theo dấu phẩy ở top-level, bỏ qua dấu phẩy trong ngoặc lồng nhau. */
+function splitTopLevelArgs(s: string): string[] {
+  const parts: string[] = [];
+  let depth = 0;
+  let current = "";
+  for (const ch of s) {
+    if (ch === "(" || ch === "[") depth++;
+    else if (ch === ")" || ch === "]") depth--;
+    if (ch === "," && depth === 0) {
+      parts.push(current);
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  if (current.trim()) parts.push(current);
+  return parts.map((p) => p.trim()).filter(Boolean);
+}
+
 function withLabel(
   args: Record<string, string | number | boolean | string[]>,
   label?: string,
@@ -143,7 +162,9 @@ export function parseManualCode(rawInput: string): ParseManualCodeResult {
   const lines = input
     .split(/[\r\n;]+/)
     .map((l) => l.trim())
-    .filter((l) => l.length > 0 && !l.startsWith("//") && !l.startsWith("#"));
+    .filter((l) => l.length > 0 && !l.startsWith("//") && !l.startsWith("#"))
+    // GeoGebra cho phép cú pháp ngoặc vuông: Intersect[A, B] → Intersect(A, B)
+    .map((l) => l.replace(/([A-Za-z][A-Za-z0-9_]*)\s*\[/g, "$1(").replace(/\]/g, ")"));
 
   if (lines.length === 0) {
     return { ok: false, error: "Không tìm thấy câu lệnh nào để thực thi." };
@@ -188,6 +209,17 @@ export function parseManualCode(rawInput: string): ParseManualCodeResult {
       continue;
     }
 
+    // Hàm số: f(x) = x^2 hoặc y = sin(x)
+    const funcMatch = /^([A-Za-z][A-Za-z0-9_]*)\s*\(\s*([A-Za-z])\s*\)\s*=\s*(.+)$/.exec(line);
+    if (funcMatch) {
+      commands.push({
+        operationId: opId,
+        commandKey: "function",
+        args: { name: funcMatch[1], var: funcMatch[2], expr: funcMatch[3].trim() },
+      });
+      continue;
+    }
+
     // label = CommandName(args...) hoặc CommandName(args...)
     const cmdMatch = /^([A-Za-z][A-Za-z0-9_]*\s*=\s*)?([A-Za-z][A-Za-z0-9_]*)\s*\((.*)\)$/.exec(
       line,
@@ -195,21 +227,27 @@ export function parseManualCode(rawInput: string): ParseManualCodeResult {
     if (cmdMatch) {
       const label = cmdMatch[1] ? cmdMatch[1].replace("=", "").trim() : undefined;
       const cmdName = cmdMatch[2].toLowerCase();
-      const rawArgs = cmdMatch[3]
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean);
+      const rawArgs = splitTopLevelArgs(cmdMatch[3]);
 
       switch (cmdName) {
         case "point": {
           if (rawArgs.length >= 2) {
             const x = parseFloat(rawArgs[0]);
             const y = parseFloat(rawArgs[1]);
-            commands.push({
-              operationId: opId,
-              commandKey: "point",
-              args: { label: label || `P_${idx + 1}`, x, y },
-            });
+            if (!isNaN(x) && !isNaN(y)) {
+              commands.push({
+                operationId: opId,
+                commandKey: "point",
+                args: { label: label || `P_${idx + 1}`, x, y },
+              });
+            } else {
+              // Point(target, t) — điểm trên đường cong theo tham số
+              commands.push({
+                operationId: opId,
+                commandKey: "point_on",
+                args: withLabel({ target: rawArgs[0], t: parseFloat(rawArgs[1]) }, label),
+              });
+            }
             continue;
           }
           break;
@@ -240,6 +278,15 @@ export function parseManualCode(rawInput: string): ParseManualCodeResult {
         }
 
         case "circle": {
+          // Circle[A, B, C] = đường tròn ngoại tiếp tam giác
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "circumcircle",
+              args: withLabel({ p1: rawArgs[0], p2: rawArgs[1], p3: rawArgs[2] }, label),
+            });
+            continue;
+          }
           if (rawArgs.length >= 2) {
             const radius = parseFloat(rawArgs[1]);
             if (!isNaN(radius) && radius > 0) {
@@ -299,10 +346,28 @@ export function parseManualCode(rawInput: string): ParseManualCodeResult {
         case "intersect":
         case "intersection": {
           if (rawArgs.length >= 2) {
+            const args: Record<string, string | number> = { o1: rawArgs[0], o2: rawArgs[1] };
+            if (rawArgs.length >= 3) {
+              const idx = parseInt(rawArgs[2], 10);
+              if (!isNaN(idx)) args.index = idx;
+            }
             commands.push({
               operationId: opId,
               commandKey: "intersection",
-              args: withLabel({ o1: rawArgs[0], o2: rawArgs[1] }, label),
+              args: withLabel(args, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "orthogonalprojection":
+        case "orthogonal_projection": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "orthogonal_projection",
+              args: withLabel({ point: rawArgs[0], line: rawArgs[1] }, label),
             });
             continue;
           }
@@ -705,12 +770,444 @@ export function parseManualCode(rawInput: string): ParseManualCodeResult {
           }
           break;
         }
+
+        // ── Lệnh bổ sung ──
+        case "regularpolygon": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "regular_polygon",
+              args: withLabel({ p1: rawArgs[0], p2: rawArgs[1], n: parseInt(rawArgs[2], 10) }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "perpendicularvector": {
+          if (rawArgs.length >= 1) {
+            commands.push({
+              operationId: opId,
+              commandKey: "perpendicular_vector",
+              args: withLabel({ v: rawArgs[0] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "unitvector": {
+          if (rawArgs.length >= 1) {
+            commands.push({
+              operationId: opId,
+              commandKey: "unit_vector",
+              args: withLabel({ v: rawArgs[0] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "unitperpendicularvector": {
+          if (rawArgs.length >= 1) {
+            commands.push({
+              operationId: opId,
+              commandKey: "unit_perpendicular_vector",
+              args: withLabel({ v: rawArgs[0] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "polarline": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "polar_line",
+              args: withLabel({ point: rawArgs[0], conic: rawArgs[1] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "parabola": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "parabola",
+              args: withLabel({ focus: rawArgs[0], directrix: rawArgs[1] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "hyperbola": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "hyperbola",
+              args: withLabel({ f1: rawArgs[0], f2: rawArgs[1], a: parseFloat(rawArgs[2]) }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "derivative": {
+          if (rawArgs.length >= 1) {
+            const args: Record<string, string | number> = { f: rawArgs[0] };
+            if (rawArgs.length >= 3) {
+              args.var = rawArgs[1];
+              args.val = parseFloat(rawArgs[2]);
+            }
+            commands.push({
+              operationId: opId,
+              commandKey: "derivative",
+              args: withLabel(args, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "integral": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "integral",
+              args: withLabel({ f: rawArgs[0], a: parseFloat(rawArgs[1]), b: parseFloat(rawArgs[2]) }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "integralbetween": {
+          if (rawArgs.length >= 4) {
+            commands.push({
+              operationId: opId,
+              commandKey: "integral_between",
+              args: withLabel({ f: rawArgs[0], a: parseFloat(rawArgs[1]), b: parseFloat(rawArgs[2]), x: rawArgs[3] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "extremum": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "extremum",
+              args: withLabel({ f: rawArgs[0], a: parseFloat(rawArgs[1]), b: parseFloat(rawArgs[2]) }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "inflection": {
+          if (rawArgs.length >= 1) {
+            commands.push({
+              operationId: opId,
+              commandKey: "inflection",
+              args: withLabel({ f: rawArgs[0] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "root": {
+          if (rawArgs.length >= 1) {
+            const args: Record<string, string | number> = { f: rawArgs[0] };
+            if (rawArgs.length >= 3) {
+              args.a = parseFloat(rawArgs[1]);
+              args.b = parseFloat(rawArgs[2]);
+            }
+            commands.push({
+              operationId: opId,
+              commandKey: "root",
+              args: withLabel(args, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "sequence": {
+          if (rawArgs.length >= 4) {
+            commands.push({
+              operationId: opId,
+              commandKey: "sequence",
+              args: withLabel({
+                expr: rawArgs[0],
+                var: rawArgs[1],
+                start: parseFloat(rawArgs[2]),
+                end: parseFloat(rawArgs[3]),
+              }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        // ── Lệnh định dạng & hiển thị ──
+        case "setcolor": {
+          if (rawArgs.length >= 4) {
+            commands.push({
+              operationId: opId,
+              commandKey: "set_color",
+              args: {
+                obj: rawArgs[0],
+                r: parseFloat(rawArgs[1]),
+                g: parseFloat(rawArgs[2]),
+                b: parseFloat(rawArgs[3]),
+              },
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "setlinethickness": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "set_line_thickness",
+              args: { obj: rawArgs[0], thickness: parseFloat(rawArgs[1]) },
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "showlabel": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "show_label",
+              args: { obj: rawArgs[0], visible: rawArgs[1].toLowerCase() === "true" },
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "zoomin": {
+          commands.push({ operationId: opId, commandKey: "zoom_in", args: {} });
+          continue;
+        }
+
+        case "zoomout": {
+          commands.push({ operationId: opId, commandKey: "zoom_out", args: {} });
+          continue;
+        }
+
+        case "setstandardview":
+        case "standardview": {
+          commands.push({ operationId: opId, commandKey: "standard_view", args: {} });
+          continue;
+        }
+
+        // ── Lệnh chuyên sâu ──
+        case "closestpoint": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "closest_point",
+              args: withLabel({ point: rawArgs[0], target: rawArgs[1] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "locus": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "locus",
+              args: withLabel({ dep: rawArgs[0], driver: rawArgs[1] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "net": {
+          if (rawArgs.length >= 1) {
+            commands.push({
+              operationId: opId,
+              commandKey: "net",
+              args: withLabel({ obj: rawArgs[0] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "perimeter": {
+          if (rawArgs.length >= 1) {
+            commands.push({
+              operationId: opId,
+              commandKey: "perimeter",
+              args: withLabel({ target: rawArgs[0] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "slope": {
+          if (rawArgs.length >= 1) {
+            commands.push({
+              operationId: opId,
+              commandKey: "slope",
+              args: withLabel({ target: rawArgs[0] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "radius": {
+          if (rawArgs.length >= 1) {
+            commands.push({
+              operationId: opId,
+              commandKey: "radius",
+              args: withLabel({ target: rawArgs[0] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "semicircle": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "semicircle",
+              args: withLabel({ p1: rawArgs[0], p2: rawArgs[1] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "areabetween": {
+          if (rawArgs.length >= 4) {
+            commands.push({
+              operationId: opId,
+              commandKey: "area_between",
+              args: withLabel({
+                f: rawArgs[0],
+                g: rawArgs[1],
+                a: parseFloat(rawArgs[2]),
+                b: parseFloat(rawArgs[3]),
+              }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "sum": {
+          if (rawArgs.length >= 4) {
+            commands.push({
+              operationId: opId,
+              commandKey: "sum",
+              args: withLabel({
+                expr: rawArgs[0],
+                var: rawArgs[1],
+                start: parseFloat(rawArgs[2]),
+                end: parseFloat(rawArgs[3]),
+              }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "product": {
+          if (rawArgs.length >= 4) {
+            commands.push({
+              operationId: opId,
+              commandKey: "product",
+              args: withLabel({
+                expr: rawArgs[0],
+                var: rawArgs[1],
+                start: parseFloat(rawArgs[2]),
+                end: parseFloat(rawArgs[3]),
+              }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "setvisible": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "set_visible",
+              args: { obj: rawArgs[0], visible: rawArgs[1].toLowerCase() === "true" },
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "setpointsize": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "set_point_size",
+              args: { obj: rawArgs[0], size: parseFloat(rawArgs[1]) },
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "setlinestyle": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "set_line_style",
+              args: { obj: rawArgs[0], style: parseFloat(rawArgs[1]) },
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "setaxesvisible": {
+          commands.push({
+            operationId: opId,
+            commandKey: "set_axes_visible",
+            args: { visible: rawArgs[0]?.toLowerCase() !== "false" },
+          });
+          continue;
+        }
+
+        case "setgridvisible": {
+          commands.push({
+            operationId: opId,
+            commandKey: "set_grid_visible",
+            args: { visible: rawArgs[0]?.toLowerCase() !== "false" },
+          });
+          continue;
+        }
       }
     }
 
     return {
       ok: false,
-      error: `Không thể nhận diện dòng ${idx + 1}: "${line}". Hỗ trợ đầy đủ lệnh 2D/3D: Point, Segment, Polygon, Circle, Sphere, Cube, Pyramid, Prism, Cylinder, Cone, Plane, Midpoint, Intersect, Line, Ray, PerpendicularLine, ParallelLine, Angle, Tangent, Vector, Arc, Sector, Ellipse, Centroid, Circumcenter, Incenter, Orthocenter, Circumcircle, Incircle, Rotate, Translate, Reflect, Dilate.`,
+      error: `Không thể nhận diện dòng ${idx + 1}: "${line}". Hỗ trợ đầy đủ: Point (tọa độ/Point(target,t)), Segment, Polygon, RegularPolygon, Semicircle, Circle (2/3 điểm), Sphere, Cube, Pyramid, Prism, Cylinder, Cone, Plane, Net, Line, Ray, Midpoint, Intersect (có index), ClosestPoint, OrthogonalProjection, PerpendicularLine, ParallelLine, Angle, AngleBisector, PerpendicularBisector, Tangent, PolarLine, Locus, Vector, PerpendicularVector, UnitVector, UnitPerpendicularVector, Arc, Sector, Ellipse, Parabola, Hyperbola, Centroid, Circumcenter, Incenter, Orthocenter, Circumcircle, Incircle, Perimeter, Slope, Radius, Area, AreaBetween, Rotate, Translate, Reflect, Dilate, Function f(x)=..., Derivative, Integral, IntegralBetween, Extremum, Inflection, Root, Sum, Product, Sequence, SetColor, SetLineThickness, SetLineStyle, SetPointSize, SetVisible, ShowLabel, SetAxesVisible, SetGridVisible, ZoomIn, ZoomOut, SetStandardView.`,
     };
   }
 

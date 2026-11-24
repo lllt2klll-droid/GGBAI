@@ -17,12 +17,16 @@ export class GeminiProvider implements AIProvider {
     private readonly model: string = GEMINI_MODEL,
   ) {}
 
-  async generateGeometry(prompt: string, context?: string): Promise<ProviderResult> {
+  async generateGeometry(
+    prompt: string,
+    context?: string,
+    mode: "2d" | "3d" | "graphing" = "2d",
+  ): Promise<ProviderResult> {
     const result = await callGeminiWithRetry({
       apiKey: this.apiKey,
       model: this.model,
       systemInstruction: SYSTEM_PROMPT,
-      userContent: [{ text: buildUserPrompt(prompt, "2d", context) }],
+      userContent: [{ text: buildUserPrompt(prompt, mode, context) }],
       temperature: 0.2,
       maxOutputTokens: 65536,
       timeoutMs: 90_000,
