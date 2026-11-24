@@ -109,6 +109,38 @@ describe("parseManualCode", () => {
     }
   });
 
+  it("parses extended geometry commands in script format", () => {
+    const script = `
+      A = (0, 0)
+      B = (3, 0)
+      C = (0, 4)
+      u = Vector(A, B)
+      alpha = Angle(B, A, C)
+      t = Tangent(B, c)
+      G = Centroid(ABC)
+      O = Circumcenter(A, B, C)
+      H = Orthocenter(A, B, C)
+      I = Incenter(A, B, C)
+      c_ext = Circumcircle(A, B, C)
+      c_in = Incircle(A, B, C)
+    `;
+
+    const result = parseManualCode(script);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.commands.length).toBe(12);
+      expect(result.commands[3].commandKey).toBe("vector");
+      expect(result.commands[4].commandKey).toBe("angle");
+      expect(result.commands[5].commandKey).toBe("tangent");
+      expect(result.commands[6].commandKey).toBe("centroid");
+      expect(result.commands[7].commandKey).toBe("circumcenter");
+      expect(result.commands[8].commandKey).toBe("orthocenter");
+      expect(result.commands[9].commandKey).toBe("incenter");
+      expect(result.commands[10].commandKey).toBe("circumcircle");
+      expect(result.commands[11].commandKey).toBe("incircle");
+    }
+  });
+
   it("returns error on invalid input", () => {
     const result = parseManualCode("InvalidUnknownCommand(xyz)");
     expect(result.ok).toBe(false);

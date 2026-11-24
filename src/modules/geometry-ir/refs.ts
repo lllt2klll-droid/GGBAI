@@ -15,6 +15,7 @@ export function objectRefs(obj: GeometryObject): string[] {
 
   switch (obj.kind) {
     case "circle":
+    case "sphere":
       add(def.center);
       add(def.through);
       break;
@@ -22,10 +23,16 @@ export function objectRefs(obj: GeometryObject): string[] {
     case "perpendicular_line":
     case "parallel_line":
     case "perpendicular_bisector":
+    case "tangent":
+    case "pyramid":
+    case "prism":
       add(def.a);
       add(def.b);
       break;
     case "angle_bisector":
+    case "arc":
+    case "sector":
+    case "ellipse":
       add(def.a);
       add(def.b);
       add(def.c);

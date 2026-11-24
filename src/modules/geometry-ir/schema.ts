@@ -92,6 +92,8 @@ const numericDefinition = z
   .object({ expression: z.string().min(1).max(200) })
   .strict();
 
+const radiusDefinition = z.object({ radius: finiteNumber.positive() }).strict();
+
 export const geometryObjectSchema = z.discriminatedUnion("kind", [
   z.object({ ...baseObject, kind: z.literal("point"), definition: pointDefinition }).strict(),
   z.object({ ...baseObject, kind: z.literal("free_point"), definition: pointDefinition }).strict(),
@@ -108,6 +110,24 @@ export const geometryObjectSchema = z.discriminatedUnion("kind", [
   z.object({ ...baseObject, kind: z.literal("angle_bisector"), definition: threeRefs }).strict(),
   z.object({ ...baseObject, kind: z.literal("perpendicular_bisector"), definition: twoRefs }).strict(),
   z.object({ ...baseObject, kind: z.literal("angle"), definition: angleDefinition }).strict(),
+  z.object({ ...baseObject, kind: z.literal("tangent"), definition: twoRefs }).strict(),
+  z.object({ ...baseObject, kind: z.literal("vector"), definition: emptyDefinition }).strict(),
+  z.object({ ...baseObject, kind: z.literal("arc"), definition: threeRefs }).strict(),
+  z.object({ ...baseObject, kind: z.literal("sector"), definition: threeRefs }).strict(),
+  z.object({ ...baseObject, kind: z.literal("ellipse"), definition: threeRefs }).strict(),
+  z.object({ ...baseObject, kind: z.literal("centroid"), definition: emptyDefinition }).strict(),
+  z.object({ ...baseObject, kind: z.literal("circumcenter"), definition: emptyDefinition }).strict(),
+  z.object({ ...baseObject, kind: z.literal("incenter"), definition: emptyDefinition }).strict(),
+  z.object({ ...baseObject, kind: z.literal("orthocenter"), definition: emptyDefinition }).strict(),
+  z.object({ ...baseObject, kind: z.literal("circumcircle"), definition: emptyDefinition }).strict(),
+  z.object({ ...baseObject, kind: z.literal("incircle"), definition: emptyDefinition }).strict(),
+  z.object({ ...baseObject, kind: z.literal("sphere"), definition: circleDefinition }).strict(),
+  z.object({ ...baseObject, kind: z.literal("cube"), definition: emptyDefinition }).strict(),
+  z.object({ ...baseObject, kind: z.literal("pyramid"), definition: twoRefs }).strict(),
+  z.object({ ...baseObject, kind: z.literal("prism"), definition: twoRefs }).strict(),
+  z.object({ ...baseObject, kind: z.literal("cylinder"), definition: radiusDefinition }).strict(),
+  z.object({ ...baseObject, kind: z.literal("cone"), definition: radiusDefinition }).strict(),
+  z.object({ ...baseObject, kind: z.literal("plane"), definition: emptyDefinition }).strict(),
   z.object({ ...baseObject, kind: z.literal("text"), definition: textDefinition }).strict(),
   z.object({ ...baseObject, kind: z.literal("numeric_value"), definition: numericDefinition }).strict(),
 ]);

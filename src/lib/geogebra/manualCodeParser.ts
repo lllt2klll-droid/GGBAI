@@ -359,6 +359,257 @@ export function parseManualCode(rawInput: string): ParseManualCodeResult {
           break;
         }
 
+        case "angle": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "angle",
+              args: withLabel({ side1: rawArgs[0], vertex: rawArgs[1], side2: rawArgs[2] }, label),
+            });
+            continue;
+          } else if (rawArgs.length === 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "angle",
+              args: withLabel({ side1: rawArgs[0], side2: rawArgs[1] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "tangent": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "tangent",
+              args: withLabel({ point: rawArgs[0], target: rawArgs[1] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "vector": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "vector",
+              args: withLabel({ p1: rawArgs[0], p2: rawArgs[1] }, label),
+            });
+            continue;
+          } else if (rawArgs.length === 1) {
+            commands.push({
+              operationId: opId,
+              commandKey: "vector",
+              args: withLabel({ p1: rawArgs[0] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "arc":
+        case "circulararc": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "arc",
+              args: withLabel({ center: rawArgs[0], p1: rawArgs[1], p2: rawArgs[2] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "sector":
+        case "circularsector": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "sector",
+              args: withLabel({ center: rawArgs[0], p1: rawArgs[1], p2: rawArgs[2] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "ellipse": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "ellipse",
+              args: withLabel({ f1: rawArgs[0], f2: rawArgs[1], point: rawArgs[2] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "centroid": {
+          if (rawArgs.length >= 1) {
+            commands.push({
+              operationId: opId,
+              commandKey: "centroid",
+              args: withLabel({ polygon: rawArgs[0] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "circumcenter": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "circumcenter",
+              args: withLabel({ p1: rawArgs[0], p2: rawArgs[1], p3: rawArgs[2] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "incenter": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "incenter",
+              args: withLabel({ p1: rawArgs[0], p2: rawArgs[1], p3: rawArgs[2] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "orthocenter": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "orthocenter",
+              args: withLabel({ p1: rawArgs[0], p2: rawArgs[1], p3: rawArgs[2] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "circumcircle": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "circumcircle",
+              args: withLabel({ p1: rawArgs[0], p2: rawArgs[1], p3: rawArgs[2] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "incircle": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "incircle",
+              args: withLabel({ p1: rawArgs[0], p2: rawArgs[1], p3: rawArgs[2] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "text": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "text",
+              args: withLabel({ text: rawArgs[0].replace(/^["']|["']$/g, ""), point: rawArgs[1] }, label),
+            });
+            continue;
+          } else if (rawArgs.length === 1) {
+            commands.push({
+              operationId: opId,
+              commandKey: "text",
+              args: withLabel({ text: rawArgs[0].replace(/^["']|["']$/g, "") }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "distance": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "distance",
+              args: withLabel({ p1: rawArgs[0], p2: rawArgs[1] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "area": {
+          if (rawArgs.length >= 1) {
+            commands.push({
+              operationId: opId,
+              commandKey: "area",
+              args: withLabel({ target: rawArgs[0] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "rotate": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "rotate",
+              args: withLabel({ object: rawArgs[0], angle: rawArgs[1], center: rawArgs[2] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "translate": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "translate",
+              args: withLabel({ object: rawArgs[0], vector: rawArgs[1] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "reflect": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "reflect",
+              args: withLabel({ object: rawArgs[0], mirror: rawArgs[1] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "dilate": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "dilate",
+              args: withLabel({ object: rawArgs[0], factor: parseFloat(rawArgs[1]), center: rawArgs[2] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
         // ── 3D Commands ──
         case "sphere": {
           if (rawArgs.length >= 2) {
@@ -459,7 +710,7 @@ export function parseManualCode(rawInput: string): ParseManualCodeResult {
 
     return {
       ok: false,
-      error: `Không thể nhận diện dòng ${idx + 1}: "${line}". Hỗ trợ lệnh Point, Segment, Polygon, Circle, Sphere, Cube, Pyramid, Prism, Cylinder, Cone, Plane, Midpoint, Intersect, Line, Ray, PerpendicularLine, ParallelLine.`,
+      error: `Không thể nhận diện dòng ${idx + 1}: "${line}". Hỗ trợ đầy đủ lệnh 2D/3D: Point, Segment, Polygon, Circle, Sphere, Cube, Pyramid, Prism, Cylinder, Cone, Plane, Midpoint, Intersect, Line, Ray, PerpendicularLine, ParallelLine, Angle, Tangent, Vector, Arc, Sector, Ellipse, Centroid, Circumcenter, Incenter, Orthocenter, Circumcircle, Incircle, Rotate, Translate, Reflect, Dilate.`,
     };
   }
 

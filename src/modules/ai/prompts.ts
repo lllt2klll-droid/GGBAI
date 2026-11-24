@@ -34,6 +34,22 @@ kind và definition:
 - perpendicular_line / parallel_line: { "a": "id_điểm", "b": "id_đường_tham_chiếu" }
 - perpendicular_bisector: { "a": "id_p1", "b": "id_p2" }
 - angle_bisector: { "a": "id_đỉnh", "b": "id_đường1", "c": "id_đường2" }
+- angle: { "vertex": "id_đỉnh", "side1": "id_p1_hoặc_đường1", "side2": "id_p2_hoặc_đường2" }
+- tangent: { "a": "id_điểm", "b": "id_đường_tròn" }
+- vector: definition {}, parents = [id_gốc, id_ngọn]
+- arc / sector: { "a": "id_tâm", "b": "id_p1", "c": "id_p2" }
+- ellipse: { "a": "id_tiêu_điểm_1", "b": "id_tiêu_điểm_2", "c": "id_điểm_trên_elip" }
+- centroid: definition {}, parents = [id_tam_giác_hoặc_đa_giác]
+- circumcenter / incenter / orthocenter: definition {}, parents = [id_A, id_B, id_C]
+- circumcircle / incircle: definition {}, parents = [id_A, id_B, id_C]
+- sphere (3D): { "center": "id_tâm", "radius": number } HOẶC { "center": "id_tâm", "through": "id_điểm" }
+- cube (3D): definition {}, parents = [id_p1, id_p2]
+- pyramid (3D): { "a": "id_đa_giác_đáy", "b": "id_đỉnh" }
+- prism (3D): { "a": "id_đa_giác_đáy", "b": "id_đỉnh_trên_hoặc_chiều_cao" }
+- cylinder (3D): { "radius": number }, parents = [id_tâm_đáy_1, id_tâm_đáy_2]
+- cone (3D): { "radius": number }, parents = [id_tâm_đáy, id_đỉnh]
+- plane (3D): definition {}, parents = [id_p1, id_p2, id_p3]
+- text: { "text": "nội dung hiển thị" }, parents = [id_điểm] (tùy chọn)
 
 ## Constraint
 { "id": "snake_case", "kind": "perpendicular"|"parallel"|"point_on_line"|"point_on_circle"|"collinear"|"concyclic"|"equal_length"|"midpoint_of"|"intersection_of"|"tangent_to"|"contains"|"fixed_coordinate"|"distance_equals"|"angle_equals", "references": ["id",...], "source": "problem_text"|"user_confirmed"|"model_inference", "required": true }

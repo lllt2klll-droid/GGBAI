@@ -139,6 +139,101 @@ const registry: Record<string, Template> = {
   perpendicular_bisector: (args) =>
     `${labelPrefix(args)}PerpendicularBisector(${pointRef(args, "p1")}, ${pointRef(args, "p2")})`,
 
+  /** Góc: Angle(p1, vertex, p2) hoặc Angle(side1, side2) */
+  angle: (args) => {
+    if (args.side1 && args.side2) {
+      if (args.vertex) {
+        return `${labelPrefix(args)}Angle(${pointRef(args, "side1")}, ${pointRef(args, "vertex")}, ${pointRef(args, "side2")})`;
+      }
+      return `${labelPrefix(args)}Angle(${pointRef(args, "side1")}, ${pointRef(args, "side2")})`;
+    }
+    if (args.p1 && args.p2 && args.p3) {
+      return `${labelPrefix(args)}Angle(${pointRef(args, "p1")}, ${pointRef(args, "p2")}, ${pointRef(args, "p3")})`;
+    }
+    throw new Error("Invalid args for angle");
+  },
+
+  /** Tiếp tuyến: Tangent(point, target) */
+  tangent: (args) =>
+    `${labelPrefix(args)}Tangent(${pointRef(args, "point")}, ${pointRef(args, "target")})`,
+
+  /** Vector: Vector(p1, p2) hoặc Vector(p1) */
+  vector: (args) => {
+    if (args.p2) {
+      return `${labelPrefix(args)}Vector(${pointRef(args, "p1")}, ${pointRef(args, "p2")})`;
+    }
+    return `${labelPrefix(args)}Vector(${pointRef(args, "p1")})`;
+  },
+
+  /** Cung tròn: CircularArc(center, p1, p2) */
+  arc: (args) =>
+    `${labelPrefix(args)}CircularArc(${pointRef(args, "center")}, ${pointRef(args, "p1")}, ${pointRef(args, "p2")})`,
+
+  /** Hình quạt tròn: CircularSector(center, p1, p2) */
+  sector: (args) =>
+    `${labelPrefix(args)}CircularSector(${pointRef(args, "center")}, ${pointRef(args, "p1")}, ${pointRef(args, "p2")})`,
+
+  /** Elip: Ellipse(f1, f2, point) */
+  ellipse: (args) =>
+    `${labelPrefix(args)}Ellipse(${pointRef(args, "f1")}, ${pointRef(args, "f2")}, ${pointRef(args, "point")})`,
+
+  /** Trọng tâm: Centroid(polygon) */
+  centroid: (args) =>
+    `${labelPrefix(args)}Centroid(${str(args, "polygon")})`,
+
+  /** Tâm đường tròn ngoại tiếp: Circumcenter(p1, p2, p3) */
+  circumcenter: (args) =>
+    `${labelPrefix(args)}Circumcenter(${pointRef(args, "p1")}, ${pointRef(args, "p2")}, ${pointRef(args, "p3")})`,
+
+  /** Tâm đường tròn nội tiếp: Incenter(p1, p2, p3) */
+  incenter: (args) =>
+    `${labelPrefix(args)}Incenter(${pointRef(args, "p1")}, ${pointRef(args, "p2")}, ${pointRef(args, "p3")})`,
+
+  /** Trực tâm tam giác: Orthocenter(p1, p2, p3) */
+  orthocenter: (args) =>
+    `${labelPrefix(args)}Orthocenter(${pointRef(args, "p1")}, ${pointRef(args, "p2")}, ${pointRef(args, "p3")})`,
+
+  /** Đường tròn ngoại tiếp: Circle(p1, p2, p3) */
+  circumcircle: (args) =>
+    `${labelPrefix(args)}Circle(${pointRef(args, "p1")}, ${pointRef(args, "p2")}, ${pointRef(args, "p3")})`,
+
+  /** Đường tròn nội tiếp: Incircle(p1, p2, p3) */
+  incircle: (args) =>
+    `${labelPrefix(args)}Incircle(${pointRef(args, "p1")}, ${pointRef(args, "p2")}, ${pointRef(args, "p3")})`,
+
+  /** Nhãn văn bản: Text("text", point) */
+  text: (args) => {
+    const content = JSON.stringify(str(args, "text"));
+    if (args.point) {
+      return `${labelPrefix(args)}Text(${content}, ${pointRef(args, "point")})`;
+    }
+    return `${labelPrefix(args)}Text(${content})`;
+  },
+
+  /** Khoảng cách: Distance(p1, p2) */
+  distance: (args) =>
+    `${labelPrefix(args)}Distance(${pointRef(args, "p1")}, ${pointRef(args, "p2")})`,
+
+  /** Diện tích: Area(target) */
+  area: (args) =>
+    `${labelPrefix(args)}Area(${str(args, "target")})`,
+
+  /** Phép quay: Rotate(obj, angle, center) */
+  rotate: (args) =>
+    `${labelPrefix(args)}Rotate(${str(args, "object")}, ${str(args, "angle")}, ${pointRef(args, "center")})`,
+
+  /** Phép tịnh tiến: Translate(obj, vector) */
+  translate: (args) =>
+    `${labelPrefix(args)}Translate(${str(args, "object")}, ${pointRef(args, "vector")})`,
+
+  /** Phép đối xứng: Reflect(obj, line/point) */
+  reflect: (args) =>
+    `${labelPrefix(args)}Reflect(${str(args, "object")}, ${pointRef(args, "mirror")})`,
+
+  /** Phép vị tự: Dilate(obj, factor, center) */
+  dilate: (args) =>
+    `${labelPrefix(args)}Dilate(${str(args, "object")}, ${num(args, "factor")}, ${pointRef(args, "center")})`,
+
   /** ── CÁC LỆNH HÌNH HỌC KHÔNG GIAN 3D ── */
 
   /** Mặt cầu: Sphere(center, radius) hoặc Sphere(center, through) */

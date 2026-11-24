@@ -195,6 +195,189 @@ function compileObject(
         commandKey: "perpendicular_bisector",
         args: { label: name(obj.id), p1: name(obj.definition.a), p2: name(obj.definition.b) },
       };
+    case "angle":
+      return {
+        commandKey: "angle",
+        args: {
+          label: name(obj.id),
+          vertex: name(obj.definition.vertex),
+          side1: name(obj.definition.side1),
+          side2: name(obj.definition.side2),
+        },
+      };
+    case "tangent":
+      return {
+        commandKey: "tangent",
+        args: {
+          label: name(obj.id),
+          point: name(obj.definition.a),
+          target: name(obj.definition.b),
+        },
+      };
+    case "vector":
+      return {
+        commandKey: "vector",
+        args: {
+          label: name(obj.id),
+          p1: name(obj.parents[0]),
+          p2: name(obj.parents[1]),
+        },
+      };
+    case "arc":
+      return {
+        commandKey: "arc",
+        args: {
+          label: name(obj.id),
+          center: name(obj.definition.a),
+          p1: name(obj.definition.b),
+          p2: name(obj.definition.c),
+        },
+      };
+    case "sector":
+      return {
+        commandKey: "sector",
+        args: {
+          label: name(obj.id),
+          center: name(obj.definition.a),
+          p1: name(obj.definition.b),
+          p2: name(obj.definition.c),
+        },
+      };
+    case "ellipse":
+      return {
+        commandKey: "ellipse",
+        args: {
+          label: name(obj.id),
+          f1: name(obj.definition.a),
+          f2: name(obj.definition.b),
+          point: name(obj.definition.c),
+        },
+      };
+    case "centroid":
+      return {
+        commandKey: "centroid",
+        args: {
+          label: name(obj.id),
+          polygon: name(obj.parents[0]),
+        },
+      };
+    case "circumcenter":
+      return {
+        commandKey: "circumcenter",
+        args: {
+          label: name(obj.id),
+          p1: name(obj.parents[0]),
+          p2: name(obj.parents[1]),
+          p3: name(obj.parents[2]),
+        },
+      };
+    case "incenter":
+      return {
+        commandKey: "incenter",
+        args: {
+          label: name(obj.id),
+          p1: name(obj.parents[0]),
+          p2: name(obj.parents[1]),
+          p3: name(obj.parents[2]),
+        },
+      };
+    case "orthocenter":
+      return {
+        commandKey: "orthocenter",
+        args: {
+          label: name(obj.id),
+          p1: name(obj.parents[0]),
+          p2: name(obj.parents[1]),
+          p3: name(obj.parents[2]),
+        },
+      };
+    case "circumcircle":
+      return {
+        commandKey: "circumcircle",
+        args: {
+          label: name(obj.id),
+          p1: name(obj.parents[0]),
+          p2: name(obj.parents[1]),
+          p3: name(obj.parents[2]),
+        },
+      };
+    case "incircle":
+      return {
+        commandKey: "incircle",
+        args: {
+          label: name(obj.id),
+          p1: name(obj.parents[0]),
+          p2: name(obj.parents[1]),
+          p3: name(obj.parents[2]),
+        },
+      };
+    case "sphere": {
+      const def = obj.definition;
+      if (def.radius !== undefined) {
+        return {
+          commandKey: "sphere",
+          args: { label: name(obj.id), center: name(def.center), radius: def.radius },
+        };
+      }
+      return {
+        commandKey: "sphere",
+        args: { label: name(obj.id), center: name(def.center), through: name(def.through!) },
+      };
+    }
+    case "cube":
+      return {
+        commandKey: "cube",
+        args: { label: name(obj.id), p1: name(obj.parents[0]), p2: name(obj.parents[1]) },
+      };
+    case "pyramid":
+      return {
+        commandKey: "pyramid",
+        args: { label: name(obj.id), bottom: name(obj.definition.a), top: name(obj.definition.b) },
+      };
+    case "prism":
+      return {
+        commandKey: "prism",
+        args: { label: name(obj.id), bottom: name(obj.definition.a), top: name(obj.definition.b) },
+      };
+    case "cylinder":
+      return {
+        commandKey: "cylinder",
+        args: {
+          label: name(obj.id),
+          p1: name(obj.parents[0]),
+          p2: name(obj.parents[1]),
+          radius: obj.definition.radius,
+        },
+      };
+    case "cone":
+      return {
+        commandKey: "cone",
+        args: {
+          label: name(obj.id),
+          p1: name(obj.parents[0]),
+          p2: name(obj.parents[1]),
+          radius: obj.definition.radius,
+        },
+      };
+    case "plane":
+      return {
+        commandKey: "plane",
+        args: {
+          label: name(obj.id),
+          p1: name(obj.parents[0]),
+          p2: name(obj.parents[1]),
+          p3: name(obj.parents[2]),
+        },
+      };
+    case "text":
+      return {
+        commandKey: "text",
+        args: {
+          label: name(obj.id),
+          text: obj.definition.text,
+          ...(obj.parents.length > 0 ? { point: name(obj.parents[0]) } : {}),
+        },
+      };
     default:
       return null;
   }

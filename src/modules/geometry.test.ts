@@ -197,4 +197,83 @@ describe("Geometry compiler", () => {
       compileCommand({ operationId: "x", commandKey: "eval", args: {} }),
     ).toThrow(/allowlist/);
   });
+
+  it("compiles newly added 2D & 3D geometric commands", () => {
+    const doc: GeometryDocument = {
+      schemaVersion: "1.0",
+      documentId: "doc_extended",
+      mode: "3d",
+      objects: [
+        point("point_a", "A", 0, 0),
+        point("point_b", "B", 3, 0),
+        point("point_c", "C", 0, 4),
+        {
+          id: "vec_u",
+          label: "u",
+          kind: "vector",
+          definition: {},
+          parents: ["point_a", "point_b"],
+          visibility: "visible",
+          provenance: "ai_generated",
+        },
+        {
+          id: "ang_bac",
+          label: "alpha",
+          kind: "angle",
+          definition: { vertex: "point_a", side1: "point_b", side2: "point_c" },
+          parents: [],
+          visibility: "visible",
+          provenance: "ai_generated",
+        },
+        {
+          id: "circle_c",
+          label: "c1",
+          kind: "circle",
+          definition: { center: "point_a", radius: 5 },
+          parents: [],
+          visibility: "visible",
+          provenance: "ai_generated",
+        },
+        {
+          id: "tan_t",
+          label: "t",
+          kind: "tangent",
+          definition: { a: "point_b", b: "circle_c" },
+          parents: [],
+          visibility: "visible",
+          provenance: "ai_generated",
+        },
+        {
+          id: "circ_abc",
+          label: "C_abc",
+          kind: "circumcircle",
+          definition: {},
+          parents: ["point_a", "point_b", "point_c"],
+          visibility: "visible",
+          provenance: "ai_generated",
+        },
+        {
+          id: "sphere_s",
+          label: "Sph",
+          kind: "sphere",
+          definition: { center: "point_a", radius: 10 },
+          parents: [],
+          visibility: "visible",
+          provenance: "ai_generated",
+        },
+      ],
+      constraints: [],
+    };
+
+    const val = validateGeometryDocument(doc);
+    expect(val.valid).toBe(true);
+
+    const plan = compileGeometryDocument(doc);
+    expect(plan.operations.length).toBe(9);
+    for (const op of plan.operations) {
+      expect(isAllowedCommandKey(op.commandKey)).toBe(true);
+      const strCmd = compileCommand(op);
+      expect(strCmd).toBeTruthy();
+    }
+  });
 });
