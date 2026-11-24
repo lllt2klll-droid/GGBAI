@@ -43,7 +43,7 @@ type QuickPreset = {
   commands: SafeGeoGebraCommand[];
 };
 
-const QUICK_PRESETS: QuickPreset[] = [
+const QUICK_PRESETS_2D: QuickPreset[] = [
   {
     label: "Tam giác ABC",
     description: "Tam giác thường từ 3 đỉnh",
@@ -51,7 +51,7 @@ const QUICK_PRESETS: QuickPreset[] = [
       { operationId: "", commandKey: "point", args: { label: "A", x: 0, y: 3 } },
       { operationId: "", commandKey: "point", args: { label: "B", x: -3, y: 0 } },
       { operationId: "", commandKey: "point", args: { label: "C", x: 3, y: 0 } },
-      { operationId: "", commandKey: "polygon", args: { vertices: "A,B,C" } },
+      { operationId: "", commandKey: "polygon", args: { label: "ABC", vertices: "A,B,C" } },
     ],
   },
   {
@@ -61,7 +61,7 @@ const QUICK_PRESETS: QuickPreset[] = [
       { operationId: "", commandKey: "point", args: { label: "A", x: 0, y: 0 } },
       { operationId: "", commandKey: "point", args: { label: "B", x: 4, y: 0 } },
       { operationId: "", commandKey: "point", args: { label: "C", x: 0, y: 3 } },
-      { operationId: "", commandKey: "polygon", args: { vertices: "A,B,C" } },
+      { operationId: "", commandKey: "polygon", args: { label: "ABC", vertices: "A,B,C" } },
     ],
   },
   {
@@ -70,7 +70,7 @@ const QUICK_PRESETS: QuickPreset[] = [
     commands: [
       { operationId: "", commandKey: "point", args: { label: "O", x: 0, y: 0 } },
       { operationId: "", commandKey: "point", args: { label: "A", x: 3, y: 0 } },
-      { operationId: "", commandKey: "circle", args: { center: "O", through: "A" } },
+      { operationId: "", commandKey: "circle", args: { label: "c", center: "O", through: "A" } },
     ],
   },
   {
@@ -79,7 +79,7 @@ const QUICK_PRESETS: QuickPreset[] = [
     commands: [
       { operationId: "", commandKey: "point", args: { label: "P", x: -2, y: 1 } },
       { operationId: "", commandKey: "point", args: { label: "Q", x: 2, y: 1 } },
-      { operationId: "", commandKey: "segment", args: { p1: "P", p2: "Q" } },
+      { operationId: "", commandKey: "segment", args: { label: "PQ", p1: "P", p2: "Q" } },
     ],
   },
   {
@@ -90,7 +90,57 @@ const QUICK_PRESETS: QuickPreset[] = [
       { operationId: "", commandKey: "point", args: { label: "B", x: 3, y: -2 } },
       { operationId: "", commandKey: "point", args: { label: "C", x: 3, y: 2 } },
       { operationId: "", commandKey: "point", args: { label: "D", x: -3, y: 2 } },
-      { operationId: "", commandKey: "polygon", args: { vertices: "A,B,C,D" } },
+      { operationId: "", commandKey: "polygon", args: { label: "ABCD", vertices: "A,B,C,D" } },
+    ],
+  },
+];
+
+const QUICK_PRESETS_3D: QuickPreset[] = [
+  {
+    label: "Hình chóp S.ABC",
+    description: "Hình chóp tam giác đáy ABC, đỉnh S",
+    commands: [
+      { operationId: "", commandKey: "point", args: { label: "A", x: -2, y: -1, z: 0 } },
+      { operationId: "", commandKey: "point", args: { label: "B", x: 2, y: -1, z: 0 } },
+      { operationId: "", commandKey: "point", args: { label: "C", x: 0, y: 2, z: 0 } },
+      { operationId: "", commandKey: "point", args: { label: "S", x: 0, y: 0, z: 4 } },
+      { operationId: "", commandKey: "polygon", args: { label: "ABC", vertices: "A,B,C" } },
+      { operationId: "", commandKey: "pyramid", args: { label: "SABC", bottom: "ABC", top: "S" } },
+    ],
+  },
+  {
+    label: "Hình lập phương",
+    description: "Khối lập phương qua 2 đỉnh A và B",
+    commands: [
+      { operationId: "", commandKey: "point", args: { label: "A", x: 0, y: 0, z: 0 } },
+      { operationId: "", commandKey: "point", args: { label: "B", x: 3, y: 0, z: 0 } },
+      { operationId: "", commandKey: "cube", args: { label: "cube1", p1: "A", p2: "B" } },
+    ],
+  },
+  {
+    label: "Mặt cầu (O, R=3)",
+    description: "Mặt cầu tâm O bán kính 3",
+    commands: [
+      { operationId: "", commandKey: "point", args: { label: "O", x: 0, y: 0, z: 0 } },
+      { operationId: "", commandKey: "sphere", args: { label: "sph1", center: "O", radius: 3 } },
+    ],
+  },
+  {
+    label: "Hình trụ",
+    description: "Hình trụ trục Oz bán kính 2",
+    commands: [
+      { operationId: "", commandKey: "point", args: { label: "A", x: 0, y: 0, z: 0 } },
+      { operationId: "", commandKey: "point", args: { label: "B", x: 0, y: 0, z: 4 } },
+      { operationId: "", commandKey: "cylinder", args: { label: "cyl1", p1: "A", p2: "B", radius: 2 } },
+    ],
+  },
+  {
+    label: "Hình nón",
+    description: "Hình nón đỉnh S bán kính đáy 2",
+    commands: [
+      { operationId: "", commandKey: "point", args: { label: "A", x: 0, y: 0, z: 0 } },
+      { operationId: "", commandKey: "point", args: { label: "S", x: 0, y: 0, z: 4 } },
+      { operationId: "", commandKey: "cone", args: { label: "cone1", p1: "A", p2: "S", radius: 2 } },
     ],
   },
 ];
@@ -119,6 +169,7 @@ export function WorkspaceClient() {
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [mobileTab, setMobileTab] = useState<"canvas" | "chat" | "inspector">("canvas");
   const [objectCount, setObjectCount] = useState(0);
+  const [mode, setMode] = useState<"2d" | "3d">("2d");
 
   const bumpHistory = () => setHistoryTick((t) => t + 1);
 
@@ -468,6 +519,44 @@ export function WorkspaceClient() {
                   : "Chưa lưu"}
             </span>
           </span>
+
+          {/* Mode Switcher 2D / 3D */}
+          <div className="flex items-center rounded-lg border border-border bg-surface-muted/60 p-0.5 text-xs ml-1">
+            <button
+              type="button"
+              onClick={() => {
+                if (mode !== "2d") {
+                  setMode("2d");
+                  setStatusMessage("Chế độ: 2D Hình học mặt phẳng");
+                }
+              }}
+              title="Chế độ 2D Hình học phẳng"
+              className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium transition-all ${
+                mode === "2d"
+                  ? "bg-surface text-primary shadow-xs font-semibold"
+                  : "text-foreground/60 hover:text-foreground"
+              }`}
+            >
+              <span>2D</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (mode !== "3d") {
+                  setMode("3d");
+                  setStatusMessage("Chế độ: 3D Hình học không gian");
+                }
+              }}
+              title="Chế độ 3D Hình học không gian"
+              className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium transition-all ${
+                mode === "3d"
+                  ? "bg-surface text-primary shadow-xs font-semibold"
+                  : "text-foreground/60 hover:text-foreground"
+              }`}
+            >
+              <span>3D</span>
+            </button>
+          </div>
         </div>
 
         {/* Center / Right: Actions & Tools */}
@@ -603,6 +692,7 @@ export function WorkspaceClient() {
             executeCommands={runCommands}
             selectedObject={selectedObject}
             onEditApplied={recordEdit}
+            mode={mode}
           />
         </section>
 
@@ -616,9 +706,9 @@ export function WorkspaceClient() {
           <div className="flex items-center gap-1.5 overflow-x-auto border-b border-border/80 bg-surface-muted/40 px-3 py-1.5 shrink-0">
             <span className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-foreground/50 shrink-0">
               <Sparkles className="h-3 w-3 text-primary" />
-              <span>Mẫu nhanh:</span>
+              <span>{mode === "3d" ? "Mẫu 3D:" : "Mẫu 2D:"}</span>
             </span>
-            {QUICK_PRESETS.map((preset) => (
+            {(mode === "3d" ? QUICK_PRESETS_3D : QUICK_PRESETS_2D).map((preset) => (
               <button
                 key={preset.label}
                 type="button"
@@ -655,7 +745,11 @@ export function WorkspaceClient() {
           {/* GeoGebra Applet Container */}
           <div className="relative min-h-0 flex-1 flex flex-col h-full w-full bg-surface overflow-hidden">
             <ErrorBoundary>
-              <GeoGebraContainer onAdapter={handleAdapter} />
+              <GeoGebraContainer
+                key={mode}
+                options={{ appName: mode === "3d" ? "3d" : "geometry" }}
+                onAdapter={handleAdapter}
+              />
             </ErrorBoundary>
           </div>
         </section>
@@ -684,7 +778,13 @@ export function WorkspaceClient() {
                 adapter ? "bg-success" : "bg-warning animate-pulse"
               }`}
             />
-            <span>{adapter ? "GeoGebra 2D: Sẵn sàng" : "Đang khởi tạo…"}</span>
+            <span>
+              {adapter
+                ? mode === "3d"
+                  ? "GeoGebra 3D: Sẵn sàng"
+                  : "GeoGebra 2D: Sẵn sàng"
+                : "Đang khởi tạo…"}
+            </span>
           </span>
           <span className="h-3 w-px bg-border" />
           <span>{objectCount} đối tượng</span>

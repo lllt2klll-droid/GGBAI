@@ -121,6 +121,9 @@ function compileObject(
           label: name(obj.id),
           x: obj.definition.coordinates[0],
           y: obj.definition.coordinates[1],
+          ...(obj.definition.coordinates.length > 2
+            ? { z: obj.definition.coordinates[2] }
+            : {}),
         },
       };
     case "segment":

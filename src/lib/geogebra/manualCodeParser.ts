@@ -155,7 +155,24 @@ export function parseManualCode(rawInput: string): ParseManualCodeResult {
     const line = lines[idx];
     const opId = `cmd_${Date.now()}_${idx}`;
 
-    // A = (1, 2) hoặc (1, 2)
+    // A = (1, 2, 3) hoặc (1, 2, 3) (Tọa độ 3D)
+    const ptCoord3DMatch = /^([A-Za-z][A-Za-z0-9_]*\s*=\s*)?\(\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*\)$/.exec(
+      line,
+    );
+    if (ptCoord3DMatch) {
+      const label = ptCoord3DMatch[1] ? ptCoord3DMatch[1].replace("=", "").trim() : `P_${idx + 1}`;
+      const x = parseFloat(ptCoord3DMatch[2]);
+      const y = parseFloat(ptCoord3DMatch[4]);
+      const z = parseFloat(ptCoord3DMatch[6]);
+      commands.push({
+        operationId: opId,
+        commandKey: "point",
+        args: { label, x, y, z },
+      });
+      continue;
+    }
+
+    // A = (1, 2) hoặc (1, 2) (Tọa độ 2D)
     const ptCoordMatch = /^([A-Za-z][A-Za-z0-9_]*\s*=\s*)?\(\s*(-?\d+(\.\d+)?)\s*,\s*(-?\d+(\.\d+)?)\s*\)$/.exec(
       line,
     );
@@ -341,12 +358,108 @@ export function parseManualCode(rawInput: string): ParseManualCodeResult {
           }
           break;
         }
+
+        // ── 3D Commands ──
+        case "sphere": {
+          if (rawArgs.length >= 2) {
+            const radius = parseFloat(rawArgs[1]);
+            if (!isNaN(radius) && radius > 0) {
+              commands.push({
+                operationId: opId,
+                commandKey: "sphere",
+                args: withLabel({ center: rawArgs[0], radius }, label),
+              });
+            } else {
+              commands.push({
+                operationId: opId,
+                commandKey: "sphere",
+                args: withLabel({ center: rawArgs[0], through: rawArgs[1] }, label),
+              });
+            }
+            continue;
+          }
+          break;
+        }
+
+        case "cube": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "cube",
+              args: withLabel({ p1: rawArgs[0], p2: rawArgs[1] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "pyramid": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "pyramid",
+              args: withLabel({ bottom: rawArgs[0], top: rawArgs[1] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "prism": {
+          if (rawArgs.length >= 2) {
+            commands.push({
+              operationId: opId,
+              commandKey: "prism",
+              args: withLabel({ bottom: rawArgs[0], top: rawArgs[1] }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "cylinder": {
+          if (rawArgs.length >= 3) {
+            const radius = parseFloat(rawArgs[2]);
+            commands.push({
+              operationId: opId,
+              commandKey: "cylinder",
+              args: withLabel({ p1: rawArgs[0], p2: rawArgs[1], radius }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "cone": {
+          if (rawArgs.length >= 3) {
+            const radius = parseFloat(rawArgs[2]);
+            commands.push({
+              operationId: opId,
+              commandKey: "cone",
+              args: withLabel({ p1: rawArgs[0], p2: rawArgs[1], radius }, label),
+            });
+            continue;
+          }
+          break;
+        }
+
+        case "plane": {
+          if (rawArgs.length >= 3) {
+            commands.push({
+              operationId: opId,
+              commandKey: "plane",
+              args: withLabel({ p1: rawArgs[0], p2: rawArgs[1], p3: rawArgs[2] }, label),
+            });
+            continue;
+          }
+          break;
+        }
       }
     }
 
     return {
       ok: false,
-      error: `Không thể nhận diện dòng ${idx + 1}: "${line}". Hỗ trợ lệnh Point, Segment, Polygon, Circle, Midpoint, Intersect, Line, Ray, PerpendicularLine, ParallelLine.`,
+      error: `Không thể nhận diện dòng ${idx + 1}: "${line}". Hỗ trợ lệnh Point, Segment, Polygon, Circle, Sphere, Cube, Pyramid, Prism, Cylinder, Cone, Plane, Midpoint, Intersect, Line, Ray, PerpendicularLine, ParallelLine.`,
     };
   }
 

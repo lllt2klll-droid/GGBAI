@@ -96,6 +96,7 @@ export function AIChatPanel({
   executeCommands,
   selectedObject,
   onEditApplied,
+  mode = "2d",
 }: {
   adapter: GeoGebraAdapter | null;
   executeCommands?: (
@@ -108,6 +109,7 @@ export function AIChatPanel({
     after: GeoGebraSnapshot,
     label: string,
   ) => void;
+  mode?: "2d" | "3d";
 }) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -452,7 +454,7 @@ export function AIChatPanel({
       const res = await aiFetch("/api/v1/ai/constructions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, mode: "2d" }),
+        body: JSON.stringify({ prompt, mode }),
       });
       const envelope = (await res.json()) as ApiEnvelope;
 

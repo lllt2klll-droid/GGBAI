@@ -25,7 +25,7 @@ Nhiệm vụ: đọc yêu cầu của người dùng và xuất DUY NHẤT một
 Mỗi object: { "id": "snake_case", "label": "tên hiển thị (vd A, M, BC)", "kind": "...", "definition": {...}, "parents": ["id1","id2"], "visibility": "visible"|"hidden", "provenance": "ai_generated" }
 
 kind và definition:
-- point / free_point: { "coordinates": [x, y], "freedom": "fixed"|"free" }
+- point / free_point: { "coordinates": [x, y] (hoặc [x, y, z] khi mode 3d), "freedom": "fixed"|"free" }
 - segment / line / ray: definition {}, parents = [id_điểm_1, id_điểm_2]
 - polygon / triangle: definition {}, parents = [id_đỉnh1, id_đỉnh2, ...] (>=3)
 - circle: { "center": "id_tâm", "through": "id_điểm" } HOẶC { "center": "id_tâm", "radius": number } — đúng MỘT trong hai

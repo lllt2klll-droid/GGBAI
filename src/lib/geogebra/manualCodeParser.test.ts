@@ -71,6 +71,30 @@ describe("parseManualCode", () => {
     }
   });
 
+  it("parses 3D script lines and shapes", () => {
+    const script3D = `
+      A = (0, 0, 0)
+      B = (3, 0, 0)
+      C = (0, 3, 0)
+      S = (0, 0, 4)
+      ABC = Polygon(A, B, C)
+      SABC = Pyramid(ABC, S)
+      sph = Sphere(A, 3)
+      cb = Cube(A, B)
+    `;
+
+    const result = parseManualCode(script3D);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.commands.length).toBe(8);
+      expect(result.commands[0]).toMatchObject({ commandKey: "point", args: { label: "A", x: 0, y: 0, z: 0 } });
+      expect(result.commands[3]).toMatchObject({ commandKey: "point", args: { label: "S", x: 0, y: 0, z: 4 } });
+      expect(result.commands[5]).toMatchObject({ commandKey: "pyramid", args: { label: "SABC", bottom: "ABC", top: "S" } });
+      expect(result.commands[6]).toMatchObject({ commandKey: "sphere", args: { label: "sph", center: "A", radius: 3 } });
+      expect(result.commands[7]).toMatchObject({ commandKey: "cube", args: { label: "cb", p1: "A", p2: "B" } });
+    }
+  });
+
   it("parses operations JSON array", () => {
     const json = JSON.stringify([
       { commandKey: "point", args: { label: "O", x: 0, y: 0 } },

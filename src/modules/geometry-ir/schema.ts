@@ -13,9 +13,12 @@ const MAX_LABEL = 20;
 
 const finiteNumber = z.number().finite();
 const coordinate = z
-  .tuple([finiteNumber, finiteNumber])
+  .union([
+    z.tuple([finiteNumber, finiteNumber]),
+    z.tuple([finiteNumber, finiteNumber, finiteNumber]),
+  ])
   .refine(
-    ([x, y]) => Math.abs(x) <= MAX_COORD && Math.abs(y) <= MAX_COORD,
+    (coords) => coords.every((c) => Math.abs(c) <= MAX_COORD),
     { message: "Coordinate out of range" },
   );
 

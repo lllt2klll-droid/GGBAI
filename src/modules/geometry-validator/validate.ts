@@ -69,16 +69,19 @@ function detectCycle(objects: GeometryDocument["objects"]): string[] | null {
 }
 
 function distance(
-  a: readonly [number, number],
-  b: readonly [number, number],
+  a: readonly number[],
+  b: readonly number[],
 ): number {
-  return Math.hypot(a[0] - b[0], a[1] - b[1]);
+  const dx = a[0] - b[0];
+  const dy = a[1] - b[1];
+  const dz = (a[2] ?? 0) - (b[2] ?? 0);
+  return Math.hypot(dx, dy, dz);
 }
 
 function cross(
-  a: readonly [number, number],
-  b: readonly [number, number],
-  c: readonly [number, number],
+  a: readonly number[],
+  b: readonly number[],
+  c: readonly number[],
 ): number {
   return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
 }
@@ -89,7 +92,7 @@ function degenerateIssues(objects: GeometryDocument["objects"]): ValidationIssue
   const issues: ValidationIssue[] = [];
   const byId = new Map(objects.map((o) => [o.id, o]));
 
-  const coordsOf = (id: string): [number, number] | null => {
+  const coordsOf = (id: string): [number, number] | [number, number, number] | null => {
     const obj = byId.get(id);
     if (!obj) return null;
     if (obj.kind === "point" || obj.kind === "free_point") {
@@ -132,8 +135,8 @@ function degenerateIssues(objects: GeometryDocument["objects"]): ValidationIssue
     // Tam giác/đa giác suy biến: 3 đỉnh thẳng hàng (tọa độ cố định)
     if ((obj.kind === "triangle" || obj.kind === "polygon") && obj.parents.length >= 3) {
       const pts = obj.parents.slice(0, 3).map(coordsOf);
-      if (pts.every((p): p is [number, number] => p !== null)) {
-        const [p1, p2, p3] = pts as [[number, number], [number, number], [number, number]];
+      if (pts.every((p): p is [number, number] | [number, number, number] => p !== null)) {
+        const [p1, p2, p3] = pts;
         if (Math.abs(cross(p1, p2, p3)) < EPS) {
           issues.push({
             code: "DEGENERATE_GEOMETRY",

@@ -29,11 +29,11 @@ function num(args: CommandArgs, key: string): number {
 }
 
 function pointRef(args: CommandArgs, key: string): string {
-  // Chấp nhận tên điểm (A) hoặc tọa độ "x,y"
+  // Chấp nhận tên điểm (A) hoặc tọa độ "x,y" hoặc "x,y,z"
   const v = str(args, key);
-  if (/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/.test(v)) {
-    const [x, y] = v.split(",").map((s) => s.trim());
-    return `(${x}, ${y})`;
+  if (/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?(\s*,\s*-?\d+(\.\d+)?)?$/.test(v)) {
+    const coords = v.split(",").map((s) => s.trim());
+    return `(${coords.join(", ")})`;
   }
   if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(v)) {
     throw new Error(`Invalid point reference: ${key}`);
@@ -50,7 +50,7 @@ function labelPrefix(args: CommandArgs): string {
 }
 
 const registry: Record<string, Template> = {
-  /** Điểm cố định có nhãn: A = (1, 2) */
+  /** Điểm cố định 2D hoặc 3D có nhãn: A = (1, 2) hoặc A = (1, 2, 3) */
   point: (args) => {
     const label = str(args, "label");
     if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(label)) {
@@ -58,6 +58,10 @@ const registry: Record<string, Template> = {
     }
     const x = num(args, "x");
     const y = num(args, "y");
+    if (args.z !== undefined) {
+      const z = num(args, "z");
+      return `${label} = (${x}, ${y}, ${z})`;
+    }
     return `${label} = (${x}, ${y})`;
   },
 
@@ -134,6 +138,43 @@ const registry: Record<string, Template> = {
   /** Trung trực của đoạn giữa hai điểm */
   perpendicular_bisector: (args) =>
     `${labelPrefix(args)}PerpendicularBisector(${pointRef(args, "p1")}, ${pointRef(args, "p2")})`,
+
+  /** ── CÁC LỆNH HÌNH HỌC KHÔNG GIAN 3D ── */
+
+  /** Mặt cầu: Sphere(center, radius) hoặc Sphere(center, through) */
+  sphere: (args) => {
+    const center = pointRef(args, "center");
+    if (args.radius !== undefined) {
+      const r = num(args, "radius");
+      if (r <= 0) throw new Error("Sphere radius must be > 0");
+      return `${labelPrefix(args)}Sphere(${center}, ${r})`;
+    }
+    return `${labelPrefix(args)}Sphere(${center}, ${pointRef(args, "through")})`;
+  },
+
+  /** Hình lập phương: Cube(p1, p2) */
+  cube: (args) =>
+    `${labelPrefix(args)}Cube(${pointRef(args, "p1")}, ${pointRef(args, "p2")})`,
+
+  /** Hình chóp: Pyramid(bottomPolygon, topPoint) */
+  pyramid: (args) =>
+    `${labelPrefix(args)}Pyramid(${str(args, "bottom")}, ${pointRef(args, "top")})`,
+
+  /** Hình lăng trụ: Prism(bottomPolygon, topPoint hoặc height) */
+  prism: (args) =>
+    `${labelPrefix(args)}Prism(${str(args, "bottom")}, ${str(args, "top")})`,
+
+  /** Hình trụ: Cylinder(bottomCenter, topCenter, radius) */
+  cylinder: (args) =>
+    `${labelPrefix(args)}Cylinder(${pointRef(args, "p1")}, ${pointRef(args, "p2")}, ${num(args, "radius")})`,
+
+  /** Hình nón: Cone(bottomCenter, topCenter, radius) */
+  cone: (args) =>
+    `${labelPrefix(args)}Cone(${pointRef(args, "p1")}, ${pointRef(args, "p2")}, ${num(args, "radius")})`,
+
+  /** Mặt phẳng: Plane(p1, p2, p3) */
+  plane: (args) =>
+    `${labelPrefix(args)}Plane(${pointRef(args, "p1")}, ${pointRef(args, "p2")}, ${pointRef(args, "p3")})`,
 };
 
 export function isAllowedCommandKey(key: string): boolean {
