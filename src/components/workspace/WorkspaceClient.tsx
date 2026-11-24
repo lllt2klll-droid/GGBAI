@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Undo2,
-  Redo2,
   Save,
   Download,
   Maximize2,
@@ -506,9 +504,6 @@ export function WorkspaceClient() {
     return () => document.removeEventListener("fullscreenchange", onFsChange);
   }, []);
 
-  const canUndo = history.canUndo();
-  const canRedo = history.canRedo();
-
   return (
     <div
       ref={workspaceRef}
@@ -598,28 +593,6 @@ export function WorkspaceClient() {
 
         {/* Center / Right: Actions & Tools */}
         <div className="flex items-center gap-1 shrink-0">
-          {/* Undo / Redo */}
-          <button
-            type="button"
-            onClick={() => void undo()}
-            disabled={!adapter || running || !canUndo}
-            title="Hoàn tác (Ctrl+Z)"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground/70 hover:bg-surface-muted hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <Undo2 className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => void redo()}
-            disabled={!adapter || running || !canRedo}
-            title="Làm lại (Ctrl+Y)"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-foreground/70 hover:bg-surface-muted hover:text-foreground transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-          >
-            <Redo2 className="h-4 w-4" />
-          </button>
-
-          <span className="mx-1 h-4 w-px bg-border" />
-
           {/* Save Button */}
           <button
             type="button"
